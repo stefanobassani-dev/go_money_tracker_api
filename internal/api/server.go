@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5"
+	"github.com/stefanobassani-dev/money-tracker/internal/auth"
 	"github.com/stefanobassani-dev/money-tracker/internal/config"
 )
 
@@ -29,6 +30,9 @@ func (s *Server) mount() http.Handler {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))
 
+	//routes
+	authHandler := auth.NewHandler(auth.NewService(s.db))
+	r.Mount("/auth", authHandler.Routes())
 	return r
 }
 
