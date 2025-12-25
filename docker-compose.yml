@@ -1,0 +1,10 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: money_tracker_db
+    environment:
+      POSTGRES_USER: stef
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: money_tracker
+    ports:
+      - "5432:5432"

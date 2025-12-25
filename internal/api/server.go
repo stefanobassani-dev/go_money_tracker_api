@@ -7,15 +7,17 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/jackc/pgx/v5"
 	"github.com/stefanobassani-dev/money-tracker/internal/config"
 )
 
 type Server struct {
 	cfg *config.Config
+	db  *pgx.Conn
 }
 
-func NewServer(cfg *config.Config) *Server {
-	return &Server{cfg: cfg}
+func NewServer(cfg *config.Config, db *pgx.Conn) *Server {
+	return &Server{cfg: cfg, db: db}
 }
 
 func (s *Server) mount() http.Handler {
