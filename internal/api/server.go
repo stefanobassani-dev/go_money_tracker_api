@@ -10,15 +10,24 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/stefanobassani-dev/money-tracker/internal/auth"
 	"github.com/stefanobassani-dev/money-tracker/internal/config"
+	"github.com/stefanobassani-dev/money-tracker/internal/tink"
 )
 
 type Server struct {
-	cfg *config.Config
-	db  *pgx.Conn
+	cfg        *config.Config
+	db         *pgx.Conn
+	tinkClient *tink.Client
 }
 
 func NewServer(cfg *config.Config, db *pgx.Conn) *Server {
-	return &Server{cfg: cfg, db: db}
+	tinkClient := tink.NewTinkClient(cfg.Tink.ClientId, cfg.Tink.ClientSecret, cfg.Tink.BaseUrl)
+	return &Server{cfg: cfg, db: db, tinkClient: tinkClient}
+}
+
+func setupAuth(s *Server) *auth.Handler {
+	authRepo := auth.NewRepository(s.db)
+	authService := auth.NewService(authRepo, s.tinkClient)
+	return auth.NewHandler(authService)
 }
 
 func (s *Server) mount() http.Handler {
@@ -30,9 +39,9 @@ func (s *Server) mount() http.Handler {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))
 
-	//routes
-	authHandler := auth.NewHandler(auth.NewService(s.db))
+	authHandler := setupAuth(s)
 	r.Mount("/auth", authHandler.Routes())
+
 	return r
 }
 

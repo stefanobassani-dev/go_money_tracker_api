@@ -10,6 +10,7 @@ import (
 type Config struct {
 	DB     DBConfig
 	Server ServerConfig
+	Tink   TinkConfig
 }
 
 type DBConfig struct {
@@ -22,6 +23,12 @@ type DBConfig struct {
 
 type ServerConfig struct {
 	Port string
+}
+
+type TinkConfig struct {
+	BaseUrl      string
+	ClientId     string
+	ClientSecret string
 }
 
 func (c *DBConfig) ConnectionString() string {
@@ -47,6 +54,11 @@ func Load() *Config {
 		},
 		Server: ServerConfig{
 			Port: getEnv("SERVER_PORT", "8080"),
+		},
+		Tink: TinkConfig{
+			BaseUrl:      getEnv("TINK_BASE_URL", ""),
+			ClientId:     getEnv("TINK_CLIENT_ID", ""),
+			ClientSecret: getEnv("TINK_CLIENT_SECRET", ""),
 		},
 	}
 }
