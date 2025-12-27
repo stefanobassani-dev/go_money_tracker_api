@@ -106,7 +106,7 @@ func (c *Client) GetAuthorizationURL(externalUserId string, clientToken string, 
 	}
 
 	//TODO HMAC per verificare integrità e non manipolazione
-	state := userID
+	state := externalUserId
 	return c.BuildUrl(c.Cfg.ClientId, state, c.Cfg.RedirectUri, code, market, locale), nil
 }
 

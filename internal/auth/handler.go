@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -29,7 +28,8 @@ func (h *Handler) Routes() chi.Router {
 }
 
 func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
-	url, err := h.service.register()
+	ctx := r.Context()
+	url, err := h.service.register(ctx)
 	if err != nil {
 		apiJson.Error(w, http.StatusInternalServerError, err.Error())
 		return
@@ -42,20 +42,10 @@ func (h *Handler) deleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) callback(w http.ResponseWriter, r *http.Request) {
-	credID := r.URL.Query().Get("credentials_id")
-	if credID == "" {
-		credID = r.URL.Query().Get("credentialsId")
-	}
-
-	if credID == "" {
-		http.Error(w, "Credentials ID missing", http.StatusBadRequest)
+	err := h.service.ProcessCallback(r)
+	if err != nil {
+		apiJson.Error(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	internalUserID := r.URL.Query().Get("state")
-	fmt.Printf("Utente %s ha collegato con successo la banca. Credential ID: %s\n", internalUserID, credID)
-
-	//TODO salvare il credentila id sulla riga dello user
-
-	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprintf(w, "<h1>Banca collegata!</h1><p>ID Credenziale: %s</p>", credID)
+	apiJson.Success(w, http.StatusOK, nil)
 }
