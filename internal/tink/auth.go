@@ -92,10 +92,22 @@ func (c *Client) GetClientAccessToken() (string, error) {
 	}
 
 	if err := c.call(http.MethodPost, path, "form", body, &res, ""); err != nil {
-		return "", fmt.Errorf("tink client access token call failed: %w", err)
+		return "", err
 	}
 
 	return res.UserAccessToken, nil
+}
+
+func (c *Client) GetAuthorizationURL(externalUserId string, clientToken string, userID string,
+	market string, locale string) (string, error) {
+	code, err := c.AuthorizationGrantDelegate(externalUserId, clientToken)
+	if err != nil {
+		return "", err
+	}
+
+	//TODO HMAC per verificare integrità e non manipolazione
+	state := userID
+	return c.BuildUrl(c.Cfg.ClientId, state, c.Cfg.RedirectUri, code, market, locale), nil
 }
 
 func (c *Client) BuildUrl(clientID string, state string, redirectURI string,

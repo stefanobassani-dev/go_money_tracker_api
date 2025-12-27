@@ -2,6 +2,7 @@ package tink
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -24,6 +25,17 @@ func NewTinkClient(cfg *config.TinkConfig) *Client {
 		},
 		Cfg: cfg,
 	}
+}
+
+type TinkError struct {
+	StatusCode int
+	Code       string
+	Message    string
+	TrackingID string
+}
+
+func (e *TinkError) Error() string {
+	return fmt.Sprintf("tink api error: %s (status: %d, tracking: %s)", e.Message, e.StatusCode, e.TrackingID)
 }
 
 func (c *Client) call(method, path string, contentType string, body io.Reader, result any, token string) error {
@@ -50,6 +62,27 @@ func (c *Client) call(method, path string, contentType string, body io.Reader, r
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode >= 400 {
+		tErr := &TinkError{
+			StatusCode: resp.StatusCode,
+			TrackingID: resp.Header.Get("X-Tink-Tracking-Id"),
+		}
+
+		var errorPayload struct {
+			ErrorMessage string `json:"errorMessage"`
+			ErrorCode    string `json:"errorCode"`
+		}
+
+		if err := json.NewDecoder(resp.Body).Decode(&errorPayload); err == nil {
+			tErr.Message = errorPayload.ErrorMessage
+			tErr.Code = errorPayload.ErrorCode
+		} else {
+			tErr.Message = "Unknown Tink API error"
+		}
+
+		return tErr
+	}
+
 	if resp.StatusCode >= 300 {
 		bodyBytes, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("tink api error [status %d]: %s", resp.StatusCode, string(bodyBytes))
@@ -68,4 +101,12 @@ func HandleError(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func FromError(err error) (*TinkError, bool) {
+	var tErr *TinkError
+	if errors.As(err, &tErr) {
+		return tErr, true
+	}
+	return nil, false
 }

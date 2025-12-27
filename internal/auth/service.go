@@ -18,25 +18,25 @@ func NewService(repo *Repository, tinkClient *tink.Client) *Service {
 	}
 }
 
-func (s *Service) register() {
+func (s *Service) register() (string, error) {
 	//get client access token
-	clientToken, err1 := s.tinkClient.GetClientAccessToken()
-	tink.HandleError(err1)
+	clientToken, err := s.tinkClient.GetClientAccessToken()
+	if err != nil {
+		return "", err
+	}
 
 	//create user
 	externalUserId := "test_id"
-	userRes, err2 := s.tinkClient.CreateUser(externalUserId, "IT", "it_IT", clientToken)
-	tink.HandleError(err2)
-	log.Println(userRes)
+	userRes, err := s.tinkClient.CreateUser(externalUserId, "IT", "it_IT", clientToken)
+	if err != nil {
+		if tErr, ok := tink.FromError(err); ok && tErr.StatusCode == 409 {
+			log.Printf("User with external_user_id %v already exists", externalUserId)
+		} else {
+			return "", err
+		}
+	}
 
-	code, err3 := s.tinkClient.AuthorizationGrantDelegate(externalUserId, clientToken)
-	tink.HandleError(err3)
-	log.Println(code)
-
-	log.Println(s.tinkClient.BuildUrl(
-		s.tinkClient.Cfg.ClientId, "", "http://localhost:8080/auth/callback", code, "IT", "it_IT"),
-	)
-
+	return s.tinkClient.GetAuthorizationURL(externalUserId, clientToken, userRes.UserID, "IT", "it_IT")
 }
 
 func (s *Service) deleteUser() {

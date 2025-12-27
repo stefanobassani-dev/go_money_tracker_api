@@ -28,15 +28,15 @@ func (c *Client) CreateUser(externalID string, market string, locale string, cli
 		Locale:         locale,
 		RetentionClass: "permanent",
 	}
-	jsonData, marshalErr := json.Marshal(reqBody)
-	if marshalErr != nil {
-		return CreateUserResponse{}, fmt.Errorf("error marshalling user request: %w", marshalErr)
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return CreateUserResponse{}, fmt.Errorf("error marshalling user request: %w", err)
 	}
 
 	var res CreateUserResponse
-	callErr := c.call(http.MethodPost, path, "json", bytes.NewReader(jsonData), &res, clientToken)
-	if callErr != nil {
-		return CreateUserResponse{}, fmt.Errorf("create user error: %w", callErr)
+	err = c.call(http.MethodPost, path, "json", bytes.NewReader(jsonData), &res, clientToken)
+	if err != nil {
+		return CreateUserResponse{}, err
 	}
 
 	return res, nil
