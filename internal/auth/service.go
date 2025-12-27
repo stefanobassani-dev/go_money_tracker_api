@@ -34,7 +34,7 @@ func (s *Service) register() {
 	log.Println(code)
 
 	log.Println(s.tinkClient.BuildUrl(
-		s.tinkClient.ClientId, "", "http://localhost:8080/auth/callback", code, "IT", "it_IT"),
+		s.tinkClient.Cfg.ClientId, "", "http://localhost:8080/auth/callback", code, "IT", "it_IT"),
 	)
 
 }

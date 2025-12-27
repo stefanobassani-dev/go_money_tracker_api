@@ -63,8 +63,8 @@ func (c *Client) GetUserAccessToken(code string) (*TokenResponse, error) {
 	path := "/oauth/token"
 
 	data := url.Values{}
-	data.Set("client_id", c.ClientId)
-	data.Set("client_secret", c.clientSecret)
+	data.Set("client_id", c.Cfg.ClientId)
+	data.Set("client_secret", c.Cfg.ClientSecret)
 	data.Set("grant_type", "authorization_code")
 	data.Set("code", code)
 
@@ -83,8 +83,8 @@ func (c *Client) GetClientAccessToken() (string, error) {
 	data := url.Values{}
 	data.Set("grant_type", "client_credentials")
 	data.Set("scope", "user:create,authorization:grant,user:read,user:delete")
-	data.Set("client_id", c.ClientId)
-	data.Set("client_secret", c.clientSecret)
+	data.Set("client_id", c.Cfg.ClientId)
+	data.Set("client_secret", c.Cfg.ClientSecret)
 	body := strings.NewReader(data.Encode())
 
 	var res struct {

@@ -29,6 +29,7 @@ type TinkConfig struct {
 	BaseUrl      string
 	ClientId     string
 	ClientSecret string
+	RedirectUri  string
 }
 
 func (c *DBConfig) ConnectionString() string {
@@ -59,6 +60,7 @@ func Load() *Config {
 			BaseUrl:      getEnv("TINK_BASE_URL", ""),
 			ClientId:     getEnv("TINK_CLIENT_ID", ""),
 			ClientSecret: getEnv("TINK_CLIENT_SECRET", ""),
+			RedirectUri:  getEnv("TINK_REDIRECT_URI", ""),
 		},
 	}
 }

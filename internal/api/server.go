@@ -20,7 +20,7 @@ type Server struct {
 }
 
 func NewServer(cfg *config.Config, db *pgx.Conn) *Server {
-	tinkClient := tink.NewTinkClient(cfg.Tink.ClientId, cfg.Tink.ClientSecret, cfg.Tink.BaseUrl)
+	tinkClient := tink.NewTinkClient(&cfg.Tink)
 	return &Server{cfg: cfg, db: db, tinkClient: tinkClient}
 }
 

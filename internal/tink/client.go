@@ -8,28 +8,26 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/stefanobassani-dev/money-tracker/internal/config"
 )
 
 type Client struct {
-	httpClient   http.Client
-	ClientId     string
-	clientSecret string
-	baseUrl      string
+	httpClient http.Client
+	Cfg        *config.TinkConfig
 }
 
-func NewTinkClient(clientId string, clientSecret string, baseUrl string) *Client {
+func NewTinkClient(cfg *config.TinkConfig) *Client {
 	return &Client{
 		httpClient: http.Client{
 			Timeout: time.Second * 5,
 		},
-		ClientId:     clientId,
-		clientSecret: clientSecret,
-		baseUrl:      baseUrl,
+		Cfg: cfg,
 	}
 }
 
 func (c *Client) call(method, path string, contentType string, body io.Reader, result any, token string) error {
-	fullURL := strings.TrimSuffix(c.baseUrl, "/") + "/" + strings.TrimPrefix(path, "/")
+	fullURL := strings.TrimSuffix(c.Cfg.BaseUrl, "/") + "/" + strings.TrimPrefix(path, "/")
 
 	req, err := http.NewRequest(method, fullURL, body)
 	if err != nil {
