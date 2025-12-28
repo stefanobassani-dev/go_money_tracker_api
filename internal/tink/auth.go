@@ -98,7 +98,7 @@ func (c *Client) GetClientAccessToken() (string, error) {
 	return res.UserAccessToken, nil
 }
 
-func (c *Client) GetAuthorizationURL(externalUserId string, clientToken string, userID string,
+func (c *Client) GetAuthorizationURL(externalUserId string, clientToken string,
 	market string, locale string) (string, error) {
 	code, err := c.AuthorizationGrantDelegate(externalUserId, clientToken)
 	if err != nil {
