@@ -1,4 +1,4 @@
-package tink
+package tinkapi
 
 import (
 	"bytes"
@@ -13,7 +13,7 @@ func (c *Client) GetUserDetails(userToken string) (TinkUserResponse, error) {
 	var res TinkUserResponse
 
 	if err := c.call(http.MethodGet, path, "form", nil, &res, userToken); err != nil {
-		return TinkUserResponse{}, fmt.Errorf("tink client user call failed: %w", err)
+		return TinkUserResponse{}, fmt.Errorf("tinkapi client user call failed: %w", err)
 	}
 
 	return res, nil
@@ -46,7 +46,7 @@ func (c *Client) DeleteUser(userToken string) error {
 	path := "/user/delete"
 
 	if err := c.call(http.MethodPost, path, "form", nil, nil, userToken); err != nil {
-		return fmt.Errorf("tink client user delete call failed: %w", err)
+		return fmt.Errorf("tinkapi client user delete call failed: %w", err)
 	}
 
 	return nil

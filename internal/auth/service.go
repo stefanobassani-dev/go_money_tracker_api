@@ -6,23 +6,25 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/stefanobassani-dev/money-tracker/internal/tink"
+	tinkapi2 "github.com/stefanobassani-dev/money-tracker/internal/integration/tinkapi"
 )
 
 type Service struct {
-	repo       *Repository
-	tinkClient *tink.Client
+	repo         *Repository
+	tinkClient   *tinkapi2.Client
+	tokenManager *tinkapi2.TokenManager
 }
 
-func NewService(repo *Repository, tinkClient *tink.Client) *Service {
+func NewService(repo *Repository, tinkClient *tinkapi2.Client, tokenManager *tinkapi2.TokenManager) *Service {
 	return &Service{
-		repo:       repo,
-		tinkClient: tinkClient,
+		repo:         repo,
+		tinkClient:   tinkClient,
+		tokenManager: tokenManager,
 	}
 }
 
 func (s *Service) register(ctx context.Context) (string, error) {
-	clientToken, err := s.tinkClient.GetClientAccessToken()
+	clientToken, err := s.tokenManager.GetToken()
 	if err != nil {
 		return "", err
 	}
@@ -44,7 +46,7 @@ func (s *Service) ensureTinkUser(ctx context.Context, extID, token string) error
 		return nil
 	}
 
-	if tErr, ok := tink.FromError(err); ok && tErr.StatusCode == 409 {
+	if tErr, ok := tinkapi2.FromError(err); ok && tErr.StatusCode == 409 {
 		return s.recoverExistingUser(ctx, extID, token)
 	}
 
@@ -86,13 +88,13 @@ func (s *Service) recoverExistingUser(ctx context.Context, externalUserID, clien
 func (s *Service) deleteUser() {
 	externalUserId := "2d7b9b46-94fe-435e-aa7d-95ac55fc188d"
 
-	clientToken, err1 := s.tinkClient.GetClientAccessToken()
-	tink.HandleError(err1)
+	clientToken, _, err1 := s.tinkClient.GetClientAccessToken()
+	tinkapi2.HandleError(err1)
 	code, err4 := s.tinkClient.AuthorizationGrant(externalUserId, clientToken)
-	tink.HandleError(err4)
+	tinkapi2.HandleError(err4)
 
 	tokenResponse, err2 := s.tinkClient.GetUserAccessToken(code)
-	tink.HandleError(err2)
+	tinkapi2.HandleError(err2)
 	log.Println(s.tinkClient.GetUserDetails(tokenResponse.AccessToken))
 	err := s.tinkClient.DeleteUser(tokenResponse.AccessToken)
 	if err != nil {
@@ -112,6 +114,5 @@ func (s *Service) ProcessCallback(r *http.Request) error {
 	//TODO controllare hmac
 	userID := r.URL.Query().Get("state")
 
-	//TODO salvare il credential id sulla riga dello user
 	return s.repo.SaveTinkCredential(r.Context(), userID, credID)
 }

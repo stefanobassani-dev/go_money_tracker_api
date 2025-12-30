@@ -1,4 +1,4 @@
-package tink
+package tinkapi
 
 import (
 	"encoding/json"
@@ -35,10 +35,10 @@ type TinkError struct {
 }
 
 func (e *TinkError) Error() string {
-	return fmt.Sprintf("tink api error: %s (status: %d, tracking: %s)", e.Message, e.StatusCode, e.TrackingID)
+	return fmt.Sprintf("tinkapi api error: %s (status: %d, tracking: %s)", e.Message, e.StatusCode, e.TrackingID)
 }
 
-func (c *Client) call(method, path string, contentType string, body io.Reader, result any, token string) error {
+func (c *Client) call(method, path, contentType string, body io.Reader, result any, token string) error {
 	fullURL := strings.TrimSuffix(c.Cfg.BaseUrl, "/") + "/" + strings.TrimPrefix(path, "/")
 
 	req, err := http.NewRequest(method, fullURL, body)
@@ -85,7 +85,7 @@ func (c *Client) call(method, path string, contentType string, body io.Reader, r
 
 	if resp.StatusCode >= 300 {
 		bodyBytes, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("tink api error [status %d]: %s", resp.StatusCode, string(bodyBytes))
+		return fmt.Errorf("tinkapi api error [status %d]: %s", resp.StatusCode, string(bodyBytes))
 	}
 
 	if result != nil {

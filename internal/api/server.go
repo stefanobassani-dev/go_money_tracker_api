@@ -10,24 +10,21 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/stefanobassani-dev/money-tracker/internal/auth"
 	"github.com/stefanobassani-dev/money-tracker/internal/config"
+	tinkapi2 "github.com/stefanobassani-dev/money-tracker/internal/integration/tinkapi"
 	"github.com/stefanobassani-dev/money-tracker/internal/tink"
 )
 
 type Server struct {
-	cfg        *config.Config
-	db         *pgx.Conn
-	tinkClient *tink.Client
+	cfg          *config.Config
+	db           *pgx.Conn
+	tinkClient   *tinkapi2.Client
+	tokenManager *tinkapi2.TokenManager
 }
 
 func NewServer(cfg *config.Config, db *pgx.Conn) *Server {
-	tinkClient := tink.NewTinkClient(&cfg.Tink)
-	return &Server{cfg: cfg, db: db, tinkClient: tinkClient}
-}
-
-func setupAuth(s *Server) *auth.Handler {
-	authRepo := auth.NewRepository(s.db)
-	authService := auth.NewService(authRepo, s.tinkClient)
-	return auth.NewHandler(authService)
+	tinkClient := tinkapi2.NewTinkClient(&cfg.Tink)
+	tokenManager := tinkapi2.NewTokenManager(tinkClient)
+	return &Server{cfg: cfg, db: db, tinkClient: tinkClient, tokenManager: tokenManager}
 }
 
 func (s *Server) mount() http.Handler {
@@ -41,6 +38,14 @@ func (s *Server) mount() http.Handler {
 
 	authHandler := setupAuth(s)
 	r.Mount("/auth", authHandler.Routes())
+
+	tinkHandler := setupTink(s)
+	r.Mount("/tink", tinkHandler.Routes())
+
+	r.Mount("/health", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	}))
 
 	return r
 }
@@ -61,4 +66,15 @@ func (s *Server) Start() error {
 	log.Println("Server is listening on port", serverPort)
 
 	return srv.ListenAndServe()
+}
+
+func setupAuth(s *Server) *auth.Handler {
+	authRepo := auth.NewRepository(s.db)
+	authService := auth.NewService(authRepo, s.tinkClient, s.tokenManager)
+	return auth.NewHandler(authService)
+}
+
+func setupTink(s *Server) *tink.Handler {
+	tinkService := tink.NewService(s.tinkClient, s.tokenManager)
+	return tink.NewHandler(tinkService)
 }

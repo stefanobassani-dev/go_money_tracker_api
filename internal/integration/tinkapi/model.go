@@ -1,4 +1,4 @@
-package tink
+package tinkapi
 
 type TokenResponse struct {
 	AccessToken  string `json:"access_token"`

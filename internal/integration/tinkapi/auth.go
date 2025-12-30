@@ -1,4 +1,4 @@
-package tink
+package tinkapi
 
 import (
 	"fmt"
@@ -12,7 +12,19 @@ const TinkLinkActorClientID = "df05e4b379934cd09963197cc855bfe9"
 func (c *Client) AuthorizationGrant(externalID string, clientToken string) (string, error) {
 	data := url.Values{}
 	data.Set("external_user_id", externalID)
-	data.Set("scope", "user:read,user:delete")
+
+	scopes := []string{
+		"authorization:read",
+		"authorization:grant",
+		"credentials:refresh",
+		"credentials:read",
+		"credentials:write",
+		"providers:read",
+		"user:read",
+		"accounts:read",
+		"transactions:read",
+	}
+	data.Set("scope", strings.Join(scopes, ","))
 
 	var res struct {
 		Code string `json:"code"`
@@ -77,8 +89,8 @@ func (c *Client) GetUserAccessToken(code string) (*TokenResponse, error) {
 	return &res, nil
 }
 
-func (c *Client) GetClientAccessToken() (string, error) {
-	path := "/oauth/token"
+func (c *Client) GetClientAccessToken() (string, int, error) {
+	path := "/api/v1/oauth/token"
 
 	data := url.Values{}
 	data.Set("grant_type", "client_credentials")
@@ -88,14 +100,16 @@ func (c *Client) GetClientAccessToken() (string, error) {
 	body := strings.NewReader(data.Encode())
 
 	var res struct {
-		UserAccessToken string `json:"access_token"`
+		AccessToken    string `json:"access_token"`
+		TokenExpiresIn int    `json:"expires_in"`
 	}
 
+	//TODO aggiungere il context per il timeout
 	if err := c.call(http.MethodPost, path, "form", body, &res, ""); err != nil {
-		return "", err
+		return "", 0, err
 	}
 
-	return res.UserAccessToken, nil
+	return res.AccessToken, res.TokenExpiresIn, nil
 }
 
 func (c *Client) GetAuthorizationURL(externalUserId string, clientToken string,

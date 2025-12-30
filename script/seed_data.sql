@@ -1,1 +1,1 @@
-INSERT INTO users (email) VALUES ('johndoe@email.com');
+INSERT INTO users (user_id, email) VALUES ('2d7b9b46-94fe-435e-aa7d-95ac55fc188d', 'johndoe@email.com');
