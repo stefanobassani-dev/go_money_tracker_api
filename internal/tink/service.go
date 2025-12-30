@@ -9,12 +9,14 @@ import (
 type Service struct {
 	tinkClient   *tinkapi.Client
 	tokenManager *tinkapi.TokenManager
+	repo         *Repository
 }
 
-func NewService(tinkClient *tinkapi.Client, tokenManager *tinkapi.TokenManager) *Service {
+func NewService(tinkClient *tinkapi.Client, tokenManager *tinkapi.TokenManager, repo *Repository) *Service {
 	return &Service{
 		tinkClient:   tinkClient,
 		tokenManager: tokenManager,
+		repo:         repo,
 	}
 }
 
@@ -23,5 +25,28 @@ func (s *Service) CreateWebhook(ctx context.Context, request tinkapi.WebhookEndp
 	if err != nil {
 		return tinkapi.WebhookEndpoint{}, err
 	}
-	return s.tinkClient.CreateWebhook(ctx, request.URL, request.Description, request.EnabledEvents, clientToken)
+	webhook, err := s.tinkClient.CreateWebhook(ctx, request.URL, request.Description, request.EnabledEvents, clientToken)
+	if err != nil {
+		return tinkapi.WebhookEndpoint{}, err
+	}
+
+	err = s.repo.SaveWebhook(ctx, webhook)
+	if err != nil {
+		return tinkapi.WebhookEndpoint{}, err
+	}
+	return webhook, nil
+}
+
+func (s *Service) DeleteWebhook(ctx context.Context, webhookID string) error {
+	clientToken, err := s.tokenManager.GetToken(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = s.tinkClient.DeleteWebhook(ctx, webhookID, clientToken)
+	if err != nil {
+		return err
+	}
+
+	return s.repo.DeleteWebhook(ctx, webhookID)
 }

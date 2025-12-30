@@ -43,3 +43,9 @@ func (c *Client) CreateWebhook(ctx context.Context, url string, description stri
 
 	return res, nil
 }
+
+func (c *Client) DeleteWebhook(ctx context.Context, webhookID string, clientToken string) error {
+	path := "/events/v2/webhook-endpoints" + "/" + webhookID
+
+	return c.call(ctx, http.MethodDelete, path, "json", nil, nil, clientToken)
+}

@@ -95,7 +95,15 @@ func (c *Client) GetClientAccessToken(ctx context.Context) (string, int, error) 
 
 	data := url.Values{}
 	data.Set("grant_type", "client_credentials")
-	data.Set("scope", "user:create,authorization:grant,user:read,user:delete")
+	//TODO to be removed
+	scopes := []string{
+		"user:create",
+		"authorization:grant",
+		"user:read",
+		"user:delete",
+		"webhook-endpoints",
+	}
+	data.Set("scope", strings.Join(scopes, ","))
 	data.Set("client_id", c.Cfg.ClientId)
 	data.Set("client_secret", c.Cfg.ClientSecret)
 	body := strings.NewReader(data.Encode())

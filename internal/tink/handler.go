@@ -23,6 +23,7 @@ func (h *Handler) Routes() chi.Router {
 	r := chi.NewRouter()
 
 	r.Post("/webhooks", h.CreateWebhook)
+	r.Delete("/webhooks/{id}", h.DeleteWebhook)
 
 	return r
 }
@@ -41,4 +42,20 @@ func (h *Handler) CreateWebhook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	apiJson.Success(w, http.StatusCreated, webhook)
+}
+
+func (h *Handler) DeleteWebhook(w http.ResponseWriter, r *http.Request) {
+	webhookID := chi.URLParam(r, "id")
+	if webhookID == "" {
+		apiJson.Error(w, http.StatusBadRequest, "webhook id required")
+	}
+
+	ctx := r.Context()
+	err := h.service.DeleteWebhook(ctx, webhookID)
+	if err != nil {
+		apiJson.Error(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	apiJson.Success(w, http.StatusOK, nil)
 }

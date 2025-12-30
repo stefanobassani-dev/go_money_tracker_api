@@ -75,6 +75,7 @@ func setupAuth(s *Server) *auth.Handler {
 }
 
 func setupTink(s *Server) *tink.Handler {
-	tinkService := tink.NewService(s.tinkClient, s.tokenManager)
+	tinkRepo := tink.NewRepository(s.db)
+	tinkService := tink.NewService(s.tinkClient, s.tokenManager, tinkRepo)
 	return tink.NewHandler(tinkService)
 }
