@@ -2,6 +2,7 @@ package tinkapi
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -19,7 +20,8 @@ type WebhookEndpoint struct {
 	UpdatedAt     time.Time `json:"updatedAt,omitempty"`
 }
 
-func (c *Client) CreateWebhook(url string, description string, events []string, clientToken string) (WebhookEndpoint, error) {
+func (c *Client) CreateWebhook(ctx context.Context, url string, description string,
+	events []string, clientToken string) (WebhookEndpoint, error) {
 	path := "/events/v2/webhook-endpoints"
 
 	data := WebhookEndpoint{
@@ -34,7 +36,7 @@ func (c *Client) CreateWebhook(url string, description string, events []string, 
 	}
 
 	var res WebhookEndpoint
-	err = c.call(http.MethodPost, path, "json", bytes.NewReader(body), &res, clientToken)
+	err = c.call(ctx, http.MethodPost, path, "json", bytes.NewReader(body), &res, clientToken)
 	if err != nil {
 		return WebhookEndpoint{}, fmt.Errorf("errore creazione webhook: %w", err)
 	}

@@ -1,6 +1,7 @@
 package tinkapi
 
 import (
+	"context"
 	"sync"
 	"time"
 )
@@ -20,7 +21,7 @@ func NewTokenManager(c *Client) *TokenManager {
 	}
 }
 
-func (m *TokenManager) GetToken() (string, error) {
+func (m *TokenManager) GetToken(ctx context.Context) (string, error) {
 	m.mu.RLock()
 	if m.clientAccessToken != "" && time.Now().Before(m.expiry.Add(-1*time.Minute)) {
 		m.mu.RUnlock()
@@ -35,7 +36,7 @@ func (m *TokenManager) GetToken() (string, error) {
 		return m.clientAccessToken, nil
 	}
 
-	newToken, expiresIn, err := m.client.GetClientAccessToken()
+	newToken, expiresIn, err := m.client.GetClientAccessToken(ctx)
 	if err != nil {
 		return "", err
 	}

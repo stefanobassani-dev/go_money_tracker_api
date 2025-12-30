@@ -24,7 +24,7 @@ func NewService(repo *Repository, tinkClient *tinkapi2.Client, tokenManager *tin
 }
 
 func (s *Service) register(ctx context.Context) (string, error) {
-	clientToken, err := s.tokenManager.GetToken()
+	clientToken, err := s.tokenManager.GetToken(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -36,11 +36,11 @@ func (s *Service) register(ctx context.Context) (string, error) {
 		return "", err
 	}
 
-	return s.tinkClient.GetAuthorizationURL(externalUserId, clientToken, "IT", "it_IT")
+	return s.tinkClient.GetAuthorizationURL(ctx, externalUserId, clientToken, "IT", "it_IT")
 }
 
 func (s *Service) ensureTinkUser(ctx context.Context, extID, token string) error {
-	res, err := s.tinkClient.CreateUser(extID, "IT", "it_IT", token)
+	res, err := s.tinkClient.CreateUser(ctx, extID, "IT", "it_IT", token)
 	if err == nil {
 		_ = s.repo.LinkTinkUser(ctx, extID, res.UserID)
 		return nil
@@ -61,17 +61,17 @@ func (s *Service) recoverExistingUser(ctx context.Context, externalUserID, clien
 
 	log.Printf("User %s exists on Tink but not in DB, starting API recovery...", externalUserID)
 
-	code, err := s.tinkClient.AuthorizationGrant(externalUserID, clientToken)
+	code, err := s.tinkClient.AuthorizationGrant(ctx, externalUserID, clientToken)
 	if err != nil {
 		return fmt.Errorf("recovery: failed authorization grant: %w", err)
 	}
 
-	tokenResponse, err := s.tinkClient.GetUserAccessToken(code)
+	tokenResponse, err := s.tinkClient.GetUserAccessToken(ctx, code)
 	if err != nil {
 		return fmt.Errorf("recovery: failed to get user access token: %w", err)
 	}
 
-	userResponse, err := s.tinkClient.GetUserDetails(tokenResponse.AccessToken)
+	userResponse, err := s.tinkClient.GetUserDetails(ctx, tokenResponse.AccessToken)
 	if err != nil {
 		return fmt.Errorf("recovery: failed to fetch user details: %w", err)
 	}
@@ -85,18 +85,18 @@ func (s *Service) recoverExistingUser(ctx context.Context, externalUserID, clien
 	return nil
 }
 
-func (s *Service) deleteUser() {
+func (s *Service) deleteUser(ctx context.Context) {
 	externalUserId := "2d7b9b46-94fe-435e-aa7d-95ac55fc188d"
 
-	clientToken, _, err1 := s.tinkClient.GetClientAccessToken()
+	clientToken, _, err1 := s.tinkClient.GetClientAccessToken(ctx)
 	tinkapi2.HandleError(err1)
-	code, err4 := s.tinkClient.AuthorizationGrant(externalUserId, clientToken)
+	code, err4 := s.tinkClient.AuthorizationGrant(ctx, externalUserId, clientToken)
 	tinkapi2.HandleError(err4)
 
-	tokenResponse, err2 := s.tinkClient.GetUserAccessToken(code)
+	tokenResponse, err2 := s.tinkClient.GetUserAccessToken(ctx, code)
 	tinkapi2.HandleError(err2)
-	log.Println(s.tinkClient.GetUserDetails(tokenResponse.AccessToken))
-	err := s.tinkClient.DeleteUser(tokenResponse.AccessToken)
+	log.Println(s.tinkClient.GetUserDetails(ctx, tokenResponse.AccessToken))
+	err := s.tinkClient.DeleteUser(ctx, tokenResponse.AccessToken)
 	if err != nil {
 		log.Println(err)
 	}

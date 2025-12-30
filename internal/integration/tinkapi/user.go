@@ -2,24 +2,25 @@ package tinkapi
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 )
 
-func (c *Client) GetUserDetails(userToken string) (TinkUserResponse, error) {
+func (c *Client) GetUserDetails(ctx context.Context, userToken string) (TinkUserResponse, error) {
 	path := "/user"
 
 	var res TinkUserResponse
 
-	if err := c.call(http.MethodGet, path, "form", nil, &res, userToken); err != nil {
+	if err := c.call(ctx, http.MethodGet, path, "form", nil, &res, userToken); err != nil {
 		return TinkUserResponse{}, fmt.Errorf("tinkapi client user call failed: %w", err)
 	}
 
 	return res, nil
 }
 
-func (c *Client) CreateUser(externalID string, market string, locale string, clientToken string) (CreateUserResponse, error) {
+func (c *Client) CreateUser(ctx context.Context, externalID string, market string, locale string, clientToken string) (CreateUserResponse, error) {
 	path := "/user/create"
 
 	reqBody := CreateUserRequest{
@@ -34,7 +35,7 @@ func (c *Client) CreateUser(externalID string, market string, locale string, cli
 	}
 
 	var res CreateUserResponse
-	err = c.call(http.MethodPost, path, "json", bytes.NewReader(jsonData), &res, clientToken)
+	err = c.call(ctx, http.MethodPost, path, "json", bytes.NewReader(jsonData), &res, clientToken)
 	if err != nil {
 		return CreateUserResponse{}, err
 	}
@@ -42,10 +43,10 @@ func (c *Client) CreateUser(externalID string, market string, locale string, cli
 	return res, nil
 }
 
-func (c *Client) DeleteUser(userToken string) error {
+func (c *Client) DeleteUser(ctx context.Context, userToken string) error {
 	path := "/user/delete"
 
-	if err := c.call(http.MethodPost, path, "form", nil, nil, userToken); err != nil {
+	if err := c.call(ctx, http.MethodPost, path, "form", nil, nil, userToken); err != nil {
 		return fmt.Errorf("tinkapi client user delete call failed: %w", err)
 	}
 

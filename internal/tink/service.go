@@ -19,9 +19,9 @@ func NewService(tinkClient *tinkapi.Client, tokenManager *tinkapi.TokenManager) 
 }
 
 func (s *Service) CreateWebhook(ctx context.Context, request tinkapi.WebhookEndpoint) (tinkapi.WebhookEndpoint, error) {
-	clientToken, err := s.tokenManager.GetToken()
+	clientToken, err := s.tokenManager.GetToken(ctx)
 	if err != nil {
 		return tinkapi.WebhookEndpoint{}, err
 	}
-	return s.tinkClient.CreateWebhook(request.URL, request.Description, request.EnabledEvents, clientToken)
+	return s.tinkClient.CreateWebhook(ctx, request.URL, request.Description, request.EnabledEvents, clientToken)
 }

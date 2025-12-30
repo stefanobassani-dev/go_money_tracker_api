@@ -1,6 +1,7 @@
 package tinkapi
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -38,10 +39,11 @@ func (e *TinkError) Error() string {
 	return fmt.Sprintf("tinkapi api error: %s (status: %d, tracking: %s)", e.Message, e.StatusCode, e.TrackingID)
 }
 
-func (c *Client) call(method, path, contentType string, body io.Reader, result any, token string) error {
+func (c *Client) call(ctx context.Context, method, path, contentType string,
+	body io.Reader, result any, token string) error {
 	fullURL := strings.TrimSuffix(c.Cfg.BaseUrl, "/") + "/" + strings.TrimPrefix(path, "/")
 
-	req, err := http.NewRequest(method, fullURL, body)
+	req, err := http.NewRequestWithContext(ctx, method, fullURL, body)
 	if err != nil {
 		return fmt.Errorf("errore creazione richiesta: %w", err)
 	}

@@ -1,6 +1,7 @@
 package tinkapi
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -9,7 +10,7 @@ import (
 
 const TinkLinkActorClientID = "df05e4b379934cd09963197cc855bfe9"
 
-func (c *Client) AuthorizationGrant(externalID string, clientToken string) (string, error) {
+func (c *Client) AuthorizationGrant(ctx context.Context, externalID string, clientToken string) (string, error) {
 	data := url.Values{}
 	data.Set("external_user_id", externalID)
 
@@ -30,14 +31,14 @@ func (c *Client) AuthorizationGrant(externalID string, clientToken string) (stri
 		Code string `json:"code"`
 	}
 
-	err := c.call("POST", "/oauth/authorization-grant", "form", strings.NewReader(data.Encode()), &res, clientToken)
+	err := c.call(ctx, "POST", "/oauth/authorization-grant", "form", strings.NewReader(data.Encode()), &res, clientToken)
 	if err != nil {
 		return "", err
 	}
 	return res.Code, nil
 }
 
-func (c *Client) AuthorizationGrantDelegate(externalUserID string, clientToken string) (string, error) {
+func (c *Client) AuthorizationGrantDelegate(ctx context.Context, externalUserID string, clientToken string) (string, error) {
 	path := "/oauth/authorization-grant/delegate"
 
 	data := url.Values{}
@@ -63,7 +64,7 @@ func (c *Client) AuthorizationGrantDelegate(externalUserID string, clientToken s
 		Code string `json:"code"`
 	}
 
-	err := c.call("POST", path, "form", strings.NewReader(data.Encode()), &res, clientToken)
+	err := c.call(ctx, "POST", path, "form", strings.NewReader(data.Encode()), &res, clientToken)
 	if err != nil {
 		return "", fmt.Errorf("delegate error: %w", err)
 	}
@@ -71,7 +72,7 @@ func (c *Client) AuthorizationGrantDelegate(externalUserID string, clientToken s
 	return res.Code, nil
 }
 
-func (c *Client) GetUserAccessToken(code string) (*TokenResponse, error) {
+func (c *Client) GetUserAccessToken(ctx context.Context, code string) (*TokenResponse, error) {
 	path := "/oauth/token"
 
 	data := url.Values{}
@@ -81,7 +82,7 @@ func (c *Client) GetUserAccessToken(code string) (*TokenResponse, error) {
 	data.Set("code", code)
 
 	var res TokenResponse
-	err := c.call("POST", path, "form", strings.NewReader(data.Encode()), &res, "")
+	err := c.call(ctx, "POST", path, "form", strings.NewReader(data.Encode()), &res, "")
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +90,7 @@ func (c *Client) GetUserAccessToken(code string) (*TokenResponse, error) {
 	return &res, nil
 }
 
-func (c *Client) GetClientAccessToken() (string, int, error) {
+func (c *Client) GetClientAccessToken(ctx context.Context) (string, int, error) {
 	path := "/api/v1/oauth/token"
 
 	data := url.Values{}
@@ -104,17 +105,16 @@ func (c *Client) GetClientAccessToken() (string, int, error) {
 		TokenExpiresIn int    `json:"expires_in"`
 	}
 
-	//TODO aggiungere il context per il timeout
-	if err := c.call(http.MethodPost, path, "form", body, &res, ""); err != nil {
+	if err := c.call(ctx, http.MethodPost, path, "form", body, &res, ""); err != nil {
 		return "", 0, err
 	}
 
 	return res.AccessToken, res.TokenExpiresIn, nil
 }
 
-func (c *Client) GetAuthorizationURL(externalUserId string, clientToken string,
+func (c *Client) GetAuthorizationURL(ctx context.Context, externalUserId string, clientToken string,
 	market string, locale string) (string, error) {
-	code, err := c.AuthorizationGrantDelegate(externalUserId, clientToken)
+	code, err := c.AuthorizationGrantDelegate(ctx, externalUserId, clientToken)
 	if err != nil {
 		return "", err
 	}

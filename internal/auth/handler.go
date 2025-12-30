@@ -38,7 +38,8 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) deleteUser(w http.ResponseWriter, r *http.Request) {
-	h.service.deleteUser()
+	ctx := r.Context()
+	h.service.deleteUser(ctx)
 }
 
 func (h *Handler) callback(w http.ResponseWriter, r *http.Request) {
