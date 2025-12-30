@@ -9,7 +9,7 @@ import (
 )
 
 func (c *Client) GetUserDetails(ctx context.Context, userToken string) (TinkUserResponse, error) {
-	path := "/user"
+	path := "api/v1/user"
 
 	var res TinkUserResponse
 
@@ -21,7 +21,7 @@ func (c *Client) GetUserDetails(ctx context.Context, userToken string) (TinkUser
 }
 
 func (c *Client) CreateUser(ctx context.Context, externalID string, market string, locale string, clientToken string) (CreateUserResponse, error) {
-	path := "/user/create"
+	path := "/api/v1/user/create"
 
 	reqBody := CreateUserRequest{
 		ExternalUserID: externalID,

@@ -11,6 +11,7 @@ import (
 const TinkLinkActorClientID = "df05e4b379934cd09963197cc855bfe9"
 
 func (c *Client) AuthorizationGrant(ctx context.Context, externalID string, clientToken string) (string, error) {
+	path := "/api/v1/oauth/authorization-grant"
 	data := url.Values{}
 	data.Set("external_user_id", externalID)
 
@@ -31,7 +32,7 @@ func (c *Client) AuthorizationGrant(ctx context.Context, externalID string, clie
 		Code string `json:"code"`
 	}
 
-	err := c.call(ctx, "POST", "/oauth/authorization-grant", "form", strings.NewReader(data.Encode()), &res, clientToken)
+	err := c.call(ctx, "POST", path, "form", strings.NewReader(data.Encode()), &res, clientToken)
 	if err != nil {
 		return "", err
 	}
@@ -39,7 +40,7 @@ func (c *Client) AuthorizationGrant(ctx context.Context, externalID string, clie
 }
 
 func (c *Client) AuthorizationGrantDelegate(ctx context.Context, externalUserID string, clientToken string) (string, error) {
-	path := "/oauth/authorization-grant/delegate"
+	path := "/api/v1/oauth/authorization-grant/delegate"
 
 	data := url.Values{}
 	data.Set("actor_client_id", TinkLinkActorClientID)
@@ -73,7 +74,7 @@ func (c *Client) AuthorizationGrantDelegate(ctx context.Context, externalUserID 
 }
 
 func (c *Client) GetUserAccessToken(ctx context.Context, code string) (*TokenResponse, error) {
-	path := "/oauth/token"
+	path := "/api/v1/oauth/token"
 
 	data := url.Values{}
 	data.Set("client_id", c.Cfg.ClientId)
