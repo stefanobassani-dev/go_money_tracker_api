@@ -50,3 +50,22 @@ func (s *Service) DeleteWebhook(ctx context.Context, webhookID string) error {
 
 	return s.repo.DeleteWebhook(ctx, webhookID)
 }
+
+func (s *Service) ListCredentials(ctx context.Context, externalUserID string) (tinkapi.CredentialResponse, error) {
+	clientToken, err := s.tokenManager.GetToken(ctx)
+	if err != nil {
+		return tinkapi.CredentialResponse{}, err
+	}
+
+	code, err := s.tinkClient.AuthorizationGrant(ctx, externalUserID, clientToken)
+	if err != nil {
+		return tinkapi.CredentialResponse{}, err
+	}
+
+	tokenRes, err := s.tinkClient.GetUserAccessToken(ctx, code)
+	if err != nil {
+		return tinkapi.CredentialResponse{}, err
+	}
+
+	return s.tinkClient.ListCredentials(ctx, tokenRes.AccessToken)
+}

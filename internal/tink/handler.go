@@ -24,6 +24,7 @@ func (h *Handler) Routes() chi.Router {
 
 	r.Post("/webhooks", h.CreateWebhook)
 	r.Delete("/webhooks/{id}", h.DeleteWebhook)
+	r.Get("/credentials", h.ListCredentials)
 
 	return r
 }
@@ -58,4 +59,14 @@ func (h *Handler) DeleteWebhook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	apiJson.Success(w, http.StatusOK, nil)
+}
+
+func (h *Handler) ListCredentials(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	credentialResponse, err := h.service.ListCredentials(ctx, "2d7b9b46-94fe-435e-aa7d-95ac55fc188d")
+	if err != nil {
+		apiJson.Error(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	apiJson.Success(w, http.StatusOK, credentialResponse)
 }

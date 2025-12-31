@@ -63,3 +63,20 @@ type CreateUserResponse struct {
 	UserID         string `json:"user_id"`
 	ExternalUserID string `json:"external_user_id"`
 }
+
+type Credential struct {
+	ID                string            `json:"id"`
+	ProviderName      string            `json:"providerName"`
+	Type              string            `json:"type"`
+	Status            string            `json:"status"`
+	StatusUpdated     int64             `json:"statusUpdated"`
+	StatusPayload     string            `json:"statusPayload"`
+	Updated           int64             `json:"updated"`
+	Fields            map[string]string `json:"fields"`
+	SessionExpiryDate int64             `json:"sessionExpiryDate"`
+	UserID            string            `json:"userId"`
+}
+
+type CredentialResponse struct {
+	Credential []Credential `json:"credentials"`
+}
