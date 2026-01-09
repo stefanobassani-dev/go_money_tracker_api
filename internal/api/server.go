@@ -7,7 +7,10 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/stefanobassani-dev/money-tracker/internal/auth"
 	"github.com/stefanobassani-dev/money-tracker/internal/config"
+	"github.com/stefanobassani-dev/money-tracker/internal/handler"
+	"github.com/stefanobassani-dev/money-tracker/internal/service"
 )
 
 type Server struct {
@@ -28,6 +31,9 @@ func (s *Server) mount() http.Handler {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))
 
+	authHandler := setupAuth()
+	r.Mount("/auth", authHandler.Routes())
+
 	return r
 }
 
@@ -38,4 +44,12 @@ func (s *Server) Run() {
 	if err := http.ListenAndServe(port, s.mount()); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func setupAuth() *handler.AuthHandler {
+	provider := auth.NewEmailPasswordAuth()
+	authService := service.NewService(provider)
+	authHandler := handler.NewAuthHandler(authService)
+
+	return authHandler
 }
