@@ -2,7 +2,9 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -11,6 +13,7 @@ type Config struct {
 	DB     DBConfig
 	Server ServerConfig
 	Tink   TinkConfig
+	JWT    JWTConfig
 }
 
 type DBConfig struct {
@@ -19,6 +22,7 @@ type DBConfig struct {
 	user     string
 	password string
 	database string
+	Driver   string
 }
 
 type ServerConfig struct {
@@ -30,6 +34,11 @@ type TinkConfig struct {
 	ClientId     string
 	ClientSecret string
 	RedirectUri  string
+}
+
+type JWTConfig struct {
+	Secret string
+	Expiry time.Duration
 }
 
 func (c *DBConfig) ConnectionString() string {
@@ -45,6 +54,12 @@ func (c *DBConfig) ConnectionString() string {
 func Load() *Config {
 	_ = godotenv.Load()
 
+	expiryDuration, err := time.ParseDuration(getEnv("JWT_EXPIRY", ""))
+	if err != nil {
+		log.Printf("Formato JWT_EXPIRY non valido, uso il default di 24h: %v", err)
+		expiryDuration = 24 * time.Hour
+	}
+
 	return &Config{
 		DB: DBConfig{
 			host:     getEnv("DB_HOST", "localhost"),
@@ -52,6 +67,7 @@ func Load() *Config {
 			user:     getEnv("DB_USER", "stef"),
 			password: getEnv("DB_PASSWORD", "password"),
 			database: getEnv("DB_DATABASE", "money_tracker"),
+			Driver:   getEnv("DB_DRIVER", "postgres"),
 		},
 		Server: ServerConfig{
 			Port: getEnv("SERVER_PORT", "8080"),
@@ -61,6 +77,10 @@ func Load() *Config {
 			ClientId:     getEnv("TINK_CLIENT_ID", ""),
 			ClientSecret: getEnv("TINK_CLIENT_SECRET", ""),
 			RedirectUri:  getEnv("TINK_REDIRECT_URI", ""),
+		},
+		JWT: JWTConfig{
+			Secret: getEnv("JWT_SECRET", ""),
+			Expiry: expiryDuration,
 		},
 	}
 }

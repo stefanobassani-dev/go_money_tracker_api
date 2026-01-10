@@ -7,31 +7,34 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stefanobassani-dev/money-tracker/internal/auth"
+	"github.com/stefanobassani-dev/money-tracker/internal/auth/jwt"
 	"github.com/stefanobassani-dev/money-tracker/internal/config"
 	"github.com/stefanobassani-dev/money-tracker/internal/handler"
+	"github.com/stefanobassani-dev/money-tracker/internal/repository/postgres"
 	"github.com/stefanobassani-dev/money-tracker/internal/service"
 )
 
 type Server struct {
-	cfg *config.Config
+	cfg        *config.Config
+	db         *pgxpool.Pool
+	jwtManager *jwt.Manager
 }
 
-func NewServer(cfg *config.Config) *Server {
+func NewServer(cfg *config.Config, db *pgxpool.Pool, jwtManager *jwt.Manager) *Server {
 	return &Server{
-		cfg: cfg,
+		cfg:        cfg,
+		db:         db,
+		jwtManager: jwtManager,
 	}
 }
 
 func (s *Server) mount() http.Handler {
 	r := chi.NewRouter()
-	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.Timeout(60 * time.Second))
+	setupMiddleware(r)
 
-	authHandler := setupAuth()
+	authHandler := setupAuth(s)
 	r.Mount("/auth", authHandler.Routes())
 
 	return r
@@ -46,9 +49,18 @@ func (s *Server) Run() {
 	}
 }
 
-func setupAuth() *handler.AuthHandler {
-	provider := auth.NewEmailPasswordAuth()
-	authService := service.NewService(provider)
+func setupMiddleware(r *chi.Mux) {
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Timeout(60 * time.Second))
+}
+
+func setupAuth(s *Server) *handler.AuthHandler {
+	repo := postgres.NewUserRepository(s.db)
+	provider := auth.NewEmailPasswordAuth(repo)
+	authService := service.NewService(provider, s.jwtManager)
 	authHandler := handler.NewAuthHandler(authService)
 
 	return authHandler
