@@ -8,10 +8,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/stefanobassani-dev/money-tracker/internal/api/handler"
 	"github.com/stefanobassani-dev/money-tracker/internal/auth"
-	"github.com/stefanobassani-dev/money-tracker/internal/auth/jwt"
 	"github.com/stefanobassani-dev/money-tracker/internal/config"
-	"github.com/stefanobassani-dev/money-tracker/internal/handler"
 	"github.com/stefanobassani-dev/money-tracker/internal/repository/postgres"
 	"github.com/stefanobassani-dev/money-tracker/internal/service"
 )
@@ -19,10 +18,10 @@ import (
 type Server struct {
 	cfg        *config.Config
 	db         *pgxpool.Pool
-	jwtManager *jwt.Manager
+	jwtManager *auth.Manager
 }
 
-func NewServer(cfg *config.Config, db *pgxpool.Pool, jwtManager *jwt.Manager) *Server {
+func NewServer(cfg *config.Config, db *pgxpool.Pool, jwtManager *auth.Manager) *Server {
 	return &Server{
 		cfg:        cfg,
 		db:         db,
@@ -60,7 +59,7 @@ func setupMiddleware(r *chi.Mux) {
 func setupAuth(s *Server) *handler.AuthHandler {
 	repo := postgres.NewUserRepository(s.db)
 	provider := auth.NewEmailPasswordAuth(repo)
-	authService := service.NewService(provider, s.jwtManager)
+	authService := service.NewService(provider, s.jwtManager, repo)
 	authHandler := handler.NewAuthHandler(authService)
 
 	return authHandler

@@ -41,9 +41,9 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*domain
 }
 
 func (r *UserRepository) CreateUser(ctx context.Context, user *domain.User) error {
-	query := "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING user_id"
+	query := "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING user_id, created_at, updated_at"
 
-	err := r.db.QueryRow(ctx, query, user.Email, user.Password).Scan(&user.ID)
+	err := r.db.QueryRow(ctx, query, user.Email, user.Password).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
 
 	return err
 }

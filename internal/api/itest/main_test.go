@@ -1,28 +1,33 @@
-package main
+package itest
 
 import (
 	"context"
 	"log"
+	"os"
+	"testing"
 
-	_ "github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stefanobassani-dev/money-tracker/internal/api"
 	"github.com/stefanobassani-dev/money-tracker/internal/auth"
 	"github.com/stefanobassani-dev/money-tracker/internal/config"
 )
 
-func main() {
+func TestMain(m *testing.M) {
 	cfg := config.Load()
 	ctx := context.Background()
 
-	pool, err := pgxpool.New(ctx, cfg.DB.ConnectionString())
+	var err error
+	db, err = pgxpool.New(ctx, cfg.DB.ConnectionString())
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer pool.Close()
 
 	jwtManager := auth.NewManager(cfg.JWT.Secret, cfg.JWT.Expiry)
+	s := api.NewServer(cfg, db, jwtManager)
 
-	server := api.NewServer(cfg, pool, jwtManager)
-	server.Run()
+	testApp = s.Mount()
+	code := m.Run()
+
+	db.Close()
+	os.Exit(code)
 }
