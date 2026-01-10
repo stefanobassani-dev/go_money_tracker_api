@@ -2,9 +2,9 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stefanobassani-dev/money-tracker/internal/domain"
 )
@@ -18,7 +18,9 @@ func NewUserRepository(db *pgxpool.Pool) *UserRepository {
 }
 
 func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
-	query := "SELECT * FROM users WHERE email = $1"
+	query := `SELECT user_id, email, password, tink_user_id,
+       created_at, updated_at
+		FROM users WHERE email = $1`
 
 	var user domain.User
 
@@ -31,7 +33,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*domain
 		&user.UpdatedAt,
 	)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, domain.ErrUserNotFound
 		}
 	}

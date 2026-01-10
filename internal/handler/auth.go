@@ -14,11 +14,6 @@ type AuthHandler struct {
 	service *service.AuthService
 }
 
-type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
 func NewAuthHandler(service *service.AuthService) *AuthHandler {
 	return &AuthHandler{
 		service: service,
@@ -38,6 +33,11 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	err := json.Decode(r, &req)
 	if err != nil {
 		json.Error(w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	if err = req.Validate(); err != nil {
+		json.Error(w, http.StatusBadRequest, err.Error())
 		return
 	}
 

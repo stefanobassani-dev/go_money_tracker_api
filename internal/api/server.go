@@ -30,7 +30,7 @@ func NewServer(cfg *config.Config, db *pgxpool.Pool, jwtManager *jwt.Manager) *S
 	}
 }
 
-func (s *Server) mount() http.Handler {
+func (s *Server) Mount() http.Handler {
 	r := chi.NewRouter()
 	setupMiddleware(r)
 
@@ -44,7 +44,7 @@ func (s *Server) Run() {
 	port := ":" + s.cfg.Server.Port
 
 	log.Printf("Listening on port %s", port)
-	if err := http.ListenAndServe(port, s.mount()); err != nil {
+	if err := http.ListenAndServe(port, s.Mount()); err != nil {
 		log.Fatal(err)
 	}
 }
