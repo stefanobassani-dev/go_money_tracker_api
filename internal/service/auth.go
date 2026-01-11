@@ -14,7 +14,7 @@ type AuthService struct {
 	repo     domain.UserRepository
 }
 
-func NewService(provider domain.AuthProvider, jwt *auth.Manager, repo domain.UserRepository) *AuthService {
+func NewAuthService(provider domain.AuthProvider, jwt *auth.Manager, repo domain.UserRepository) *AuthService {
 	return &AuthService{
 		provider: provider,
 		jwt:      jwt,

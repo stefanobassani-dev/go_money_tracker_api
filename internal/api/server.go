@@ -13,6 +13,7 @@ import (
 	"github.com/stefanobassani-dev/money-tracker/internal/config"
 	"github.com/stefanobassani-dev/money-tracker/internal/repository/postgres"
 	"github.com/stefanobassani-dev/money-tracker/internal/service"
+	"github.com/stefanobassani-dev/money-tracker/internal/tink"
 )
 
 type Server struct {
@@ -35,6 +36,8 @@ func (s *Server) Mount() http.Handler {
 
 	authHandler := setupAuth(s)
 	r.Mount("/auth", authHandler.Routes())
+	tinkHandler := setupTink(s)
+	r.Mount("/tink", tinkHandler.Routes())
 
 	return r
 }
@@ -59,8 +62,15 @@ func setupMiddleware(r *chi.Mux) {
 func setupAuth(s *Server) *handler.AuthHandler {
 	repo := postgres.NewUserRepository(s.db)
 	provider := auth.NewEmailPasswordAuth(repo)
-	authService := service.NewService(provider, s.jwtManager, repo)
+	authService := service.NewAuthService(provider, s.jwtManager, repo)
 	authHandler := handler.NewAuthHandler(authService)
 
 	return authHandler
+}
+
+func setupTink(s *Server) *handler.TinkHandler {
+	tinkClient := tink.NewTinkClient(&s.cfg.Tink)
+	tinkService := service.NewTinkService(tinkClient)
+	tinkHandler := handler.NewTinkHandler(tinkService)
+	return tinkHandler
 }
