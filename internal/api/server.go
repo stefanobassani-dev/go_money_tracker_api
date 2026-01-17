@@ -34,9 +34,12 @@ func (s *Server) Mount() http.Handler {
 	r := chi.NewRouter()
 	setupMiddleware(r)
 
-	authHandler := setupAuth(s)
+	userRepo := postgres.NewUserRepository(s.db)
+	credentialRepo := postgres.NewCredentialRepository(s.db)
+
+	authHandler := setupAuth(s, userRepo)
 	r.Mount("/auth", authHandler.Routes())
-	tinkHandler := setupTink(s)
+	tinkHandler := setupTink(s, userRepo, credentialRepo)
 	r.Mount("/tink", tinkHandler.Routes())
 
 	return r
@@ -59,8 +62,7 @@ func setupMiddleware(r *chi.Mux) {
 	r.Use(middleware.Timeout(60 * time.Second))
 }
 
-func setupAuth(s *Server) *handler.AuthHandler {
-	repo := postgres.NewUserRepository(s.db)
+func setupAuth(s *Server, repo *postgres.UserRepository) *handler.AuthHandler {
 	provider := auth.NewEmailPasswordAuth(repo)
 	authService := service.NewAuthService(provider, s.jwtManager, repo)
 	authHandler := handler.NewAuthHandler(authService)
@@ -68,9 +70,14 @@ func setupAuth(s *Server) *handler.AuthHandler {
 	return authHandler
 }
 
-func setupTink(s *Server) *handler.TinkHandler {
-	tinkClient := tink.NewTinkClient(&s.cfg.Tink)
-	tinkService := service.NewTinkService(tinkClient)
-	tinkHandler := handler.NewTinkHandler(tinkService)
+func setupTink(s *Server, userRepo *postgres.UserRepository,
+	credentialRepo *postgres.CredentialRepository) *handler.TinkHandler {
+	httpClient := http.Client{
+		Timeout: time.Second * 5,
+	}
+	tokenManager := tink.NewTokenManager(&httpClient, &s.cfg.Tink)
+	tinkClient := tink.NewTinkClient(&s.cfg.Tink, tokenManager, &httpClient)
+	tinkService := service.NewTinkService(tinkClient, userRepo, credentialRepo)
+	tinkHandler := handler.NewTinkHandler(tinkService, s.jwtManager)
 	return tinkHandler
 }

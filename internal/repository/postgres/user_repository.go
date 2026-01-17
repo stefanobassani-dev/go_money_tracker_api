@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 
 	"github.com/jackc/pgx/v5"
@@ -45,5 +46,28 @@ func (r *UserRepository) CreateUser(ctx context.Context, user *domain.User) erro
 
 	err := r.db.QueryRow(ctx, query, user.Email, user.Password).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
 
+	return err
+}
+
+func (r *UserRepository) GetTinkIDByUserID(ctx context.Context, userID string) (string, error) {
+	var tinkID sql.NullString
+
+	query := `SELECT tink_user_id FROM users WHERE user_id = $1`
+
+	err := r.db.QueryRow(ctx, query, userID).Scan(&tinkID)
+	if err != nil {
+		return "", err
+	}
+
+	if tinkID.Valid {
+		return tinkID.String, nil
+	}
+
+	return "", nil
+}
+
+func (r *UserRepository) UpdateTinkID(ctx context.Context, userID string, newTinkID string) error {
+	query := `UPDATE users SET tink_user_id = $2 WHERE user_id = $1`
+	_, err := r.db.Exec(ctx, query, userID, newTinkID)
 	return err
 }

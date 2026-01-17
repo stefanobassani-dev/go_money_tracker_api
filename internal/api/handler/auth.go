@@ -50,6 +50,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		}
 		if errors.Is(err, domain.ErrUserNotFound) {
 			json.Error(w, http.StatusUnauthorized, "User not found")
+			return
 		}
 
 		json.Error(w, http.StatusInternalServerError, "Internal server error")

@@ -1,30 +1,45 @@
 package tink
 
 import (
-	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
-	"log"
 	"net/http"
-	"strings"
-	"time"
 
 	"github.com/stefanobassani-dev/money-tracker/internal/config"
 )
 
+type APIPath string
+
+const (
+	PathTokenExchange     APIPath = "/api/v1/oauth/token"
+	PathUserCreate        APIPath = "/api/v1/user/create"
+	PathGetUser           APIPath = "/api/v1/user"
+	PathAuthorize         APIPath = "/api/v1/oauth/authorization-grant"
+	PathAuthorizeDelegate APIPath = "/api/v1/oauth/authorization-grant/delegate"
+	PathGetCredential     APIPath = "/api/v1/credentials/"
+)
+
+type ContentType string
+
+const (
+	ContentTypeJSON ContentType = "application/json"
+	ContentTypeForm ContentType = "application/x-www-form-urlencoded"
+)
+
+const TinkActorClientID = "df05e4b379934cd09963197cc855bfe9"
+const ApiConnectURL = "https://link.tink.com/1.0/transactions/connect-accounts"
+
 type Client struct {
-	httpClient http.Client
-	Cfg        *config.TinkConfig
+	//TODO verificare se davvero utilizzate, sennò rimuovere
+	Cfg          *config.TinkConfig
+	TokenManager *TokenManager
+	httpClient   *http.Client
 }
 
-func NewTinkClient(cfg *config.TinkConfig) *Client {
+func NewTinkClient(cfg *config.TinkConfig, tokenManager *TokenManager, http *http.Client) *Client {
 	return &Client{
-		httpClient: http.Client{
-			Timeout: time.Second * 5,
-		},
-		Cfg: cfg,
+		Cfg:          cfg,
+		TokenManager: tokenManager,
+		httpClient:   http,
 	}
 }
 
@@ -37,78 +52,4 @@ type TinkError struct {
 
 func (e *TinkError) Error() string {
 	return fmt.Sprintf("tinkapi api error: %s (status: %d, tracking: %s)", e.Message, e.StatusCode, e.TrackingID)
-}
-
-func (c *Client) call(ctx context.Context, method, path, contentType string,
-	body io.Reader, result any, token string) error {
-	fullURL := strings.TrimSuffix(c.Cfg.BaseUrl, "/") + "/" + strings.TrimPrefix(path, "/")
-
-	req, err := http.NewRequestWithContext(ctx, method, fullURL, body)
-	if err != nil {
-		return fmt.Errorf("error creating request: %w", err)
-	}
-
-	if token != "" {
-		req.Header.Set("Authorization", "Bearer "+token)
-	}
-
-	if contentType == "json" {
-		req.Header.Set("Content-Type", "application/json")
-	} else {
-		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	}
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("error sending request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 400 {
-		tErr := &TinkError{
-			StatusCode: resp.StatusCode,
-			TrackingID: resp.Header.Get("X-Tink-Tracking-Id"),
-		}
-
-		var errorPayload struct {
-			ErrorMessage string `json:"errorMessage"`
-			ErrorCode    string `json:"errorCode"`
-		}
-
-		if err := json.NewDecoder(resp.Body).Decode(&errorPayload); err == nil {
-			tErr.Message = errorPayload.ErrorMessage
-			tErr.Code = errorPayload.ErrorCode
-		} else {
-			tErr.Message = "Unknown Tink API error"
-		}
-
-		return tErr
-	}
-
-	if resp.StatusCode >= 300 {
-		bodyBytes, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("tinkapi api error [status %d]: %s", resp.StatusCode, string(bodyBytes))
-	}
-
-	if result != nil {
-		if err := json.NewDecoder(resp.Body).Decode(result); err != nil {
-			return fmt.Errorf("errore decodifica risposta: %w", err)
-		}
-	}
-
-	return nil
-}
-
-func HandleError(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func FromError(err error) (*TinkError, bool) {
-	var tErr *TinkError
-	if errors.As(err, &tErr) {
-		return tErr, true
-	}
-	return nil, false
 }

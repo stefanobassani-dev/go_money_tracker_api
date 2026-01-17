@@ -34,6 +34,8 @@ type TinkConfig struct {
 	ClientId     string
 	ClientSecret string
 	RedirectUri  string
+	Market       string
+	Locale       string
 }
 
 type JWTConfig struct {
@@ -77,6 +79,8 @@ func Load() *Config {
 			ClientId:     getEnv("TINK_CLIENT_ID", ""),
 			ClientSecret: getEnv("TINK_CLIENT_SECRET", ""),
 			RedirectUri:  getEnv("TINK_REDIRECT_URI", ""),
+			Market:       "IT",
+			Locale:       "it_IT",
 		},
 		JWT: JWTConfig{
 			Secret: getEnv("JWT_SECRET", ""),

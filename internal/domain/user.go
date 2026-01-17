@@ -8,6 +8,8 @@ import (
 type UserRepository interface {
 	FindByEmail(ctx context.Context, email string) (*User, error)
 	CreateUser(ctx context.Context, user *User) error
+	GetTinkIDByUserID(ctx context.Context, userID string) (string, error)
+	UpdateTinkID(ctx context.Context, userID string, newTinkID string) error
 }
 
 type User struct {
