@@ -7,14 +7,13 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/stefanobassani-dev/money-tracker/internal/api/json"
 	"github.com/stefanobassani-dev/money-tracker/internal/domain"
-	"github.com/stefanobassani-dev/money-tracker/internal/service"
 )
 
 type AuthHandler struct {
-	service *service.AuthService
+	service domain.AuthService
 }
 
-func NewAuthHandler(service *service.AuthService) *AuthHandler {
+func NewAuthHandler(service domain.AuthService) *AuthHandler {
 	return &AuthHandler{
 		service: service,
 	}

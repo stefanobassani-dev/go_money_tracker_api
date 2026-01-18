@@ -16,3 +16,9 @@ type TinkClient interface {
 	BuildUrl(code string, state string) string
 	GetUserCredential(ctx context.Context, credentialID string, externalID string) (*models.Credential, error)
 }
+
+type TinkService interface {
+	GetOrCreateTinkUser(ctx context.Context, userID string) (string, error)
+	GetConnectURL(ctx context.Context, externalUserID string) (string, error)
+	SaveCredential(ctx context.Context, credentialID string, externalUserID string) error
+}

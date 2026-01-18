@@ -6,15 +6,15 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/stefanobassani-dev/money-tracker/internal/api/json"
 	"github.com/stefanobassani-dev/money-tracker/internal/auth"
-	"github.com/stefanobassani-dev/money-tracker/internal/service"
+	"github.com/stefanobassani-dev/money-tracker/internal/domain"
 )
 
 type TinkHandler struct {
-	service    *service.TinkService
+	service    domain.TinkService
 	jwtManager *auth.Manager
 }
 
-func NewTinkHandler(service *service.TinkService, jwtManager *auth.Manager) *TinkHandler {
+func NewTinkHandler(service domain.TinkService, jwtManager *auth.Manager) *TinkHandler {
 	return &TinkHandler{
 		service:    service,
 		jwtManager: jwtManager,
@@ -64,6 +64,18 @@ func (h *TinkHandler) GetConnectURL(w http.ResponseWriter, r *http.Request) {
 func (h *TinkHandler) HandleCallback(w http.ResponseWriter, r *http.Request) {
 	credentialID := r.URL.Query().Get("credentialsId")
 	externalUserID := r.URL.Query().Get("state")
+	errorType := r.URL.Query().Get("error")
+	errorDisplayMessage := r.URL.Query().Get("error_display_message")
+
+	if errorType != "" {
+		json.Error(w, http.StatusInternalServerError, errorDisplayMessage)
+		return
+	}
+
+	if externalUserID == "" || credentialID == "" {
+		json.Error(w, http.StatusBadRequest, "missing parameters")
+		return
+	}
 
 	err := h.service.SaveCredential(r.Context(), credentialID, externalUserID)
 	if err != nil {

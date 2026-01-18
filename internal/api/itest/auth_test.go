@@ -1,28 +1,13 @@
 package itest
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"log"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 )
-
-var (
-	testApp http.Handler
-	db      *pgxpool.Pool
-)
-
-type Test struct {
-	name           string
-	body           map[string]string
-	expectedStatus int
-}
 
 func TestLogin(t *testing.T) {
 	ctx := context.Background()
@@ -69,7 +54,7 @@ func TestLogin(t *testing.T) {
 		},
 	}
 
-	runTests(t, "/auth/login", tests)
+	runTests(t, "/auth/login", http.MethodPost, tests)
 }
 
 func TestRegister(t *testing.T) {
@@ -117,7 +102,7 @@ func TestRegister(t *testing.T) {
 		},
 	}
 
-	runTests(t, "/auth/register", tests)
+	runTests(t, "/auth/register", http.MethodPost, tests)
 }
 
 func flushDBAndCreateUser(ctx context.Context) {
@@ -127,24 +112,4 @@ func flushDBAndCreateUser(ctx context.Context) {
 		log.Fatal(err)
 	}
 	db.Exec(ctx, "INSERT INTO USERS (email, password) VALUES ('stefano@gmail.com', $1)", hash)
-}
-
-func runTests(t *testing.T, path string, tests []Test) {
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			jsonBody, _ := json.Marshal(tt.body)
-
-			req := httptest.NewRequest(http.MethodPost, path, bytes.NewBuffer(jsonBody))
-			req.Header.Set("Content-Type", "application/json")
-
-			w := httptest.NewRecorder()
-			testApp.ServeHTTP(w, req)
-
-			if w.Code != tt.expectedStatus {
-				t.Errorf("Caso '%s': atteso %d, ottenuto %d. Body: %s",
-					tt.name, tt.expectedStatus, w.Code, w.Body.String())
-			}
-
-		})
-	}
 }

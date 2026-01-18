@@ -1,0 +1,9 @@
+# .mockery.yaml
+all: true
+dir: "internal/mocks"
+outpkg: "mocks"
+case: "underscore"
+packages:
+  github.com/stefanobassani-dev/money-tracker/internal/domain:
+    config:
+      all: true
