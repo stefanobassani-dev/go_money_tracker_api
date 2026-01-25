@@ -1,4 +1,4 @@
-package models
+package tink
 
 type AuthorizationRequest struct {
 	ActorClientID string `url:"actor_client_id"`

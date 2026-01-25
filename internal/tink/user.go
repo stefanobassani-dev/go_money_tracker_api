@@ -3,8 +3,6 @@ package tink
 import (
 	"context"
 	"net/http"
-
-	"github.com/stefanobassani-dev/money-tracker/internal/models"
 )
 
 func (c *Client) CreateUser(ctx context.Context, externalID string) (string, error) {
@@ -13,7 +11,7 @@ func (c *Client) CreateUser(ctx context.Context, externalID string) (string, err
 		return "", err
 	}
 
-	req := &models.CreateUserRequest{
+	req := &CreateUserRequest{
 		ExternalUserID: externalID,
 		Market:         c.Cfg.Market,
 		Locale:         c.Cfg.Locale,
@@ -25,7 +23,7 @@ func (c *Client) CreateUser(ctx context.Context, externalID string) (string, err
 		return "", err
 	}
 
-	var res models.CreateUserResponse
+	var res CreateUserResponse
 
 	props := Props{
 		ctx:         ctx,
@@ -53,13 +51,13 @@ func (c *Client) GetUserByExternalID(ctx context.Context, externalID string) (st
 		return "", err
 	}
 
-	var res models.User
+	var res User
 	props := Props{
 		ctx:         ctx,
 		httpClient:  c.httpClient,
 		baseUrl:     c.Cfg.BaseUrl,
-		path:        string(PathUserCreate),
-		method:      http.MethodPost,
+		path:        string(PathGetUser),
+		method:      http.MethodGet,
 		contentType: ContentTypeJSON,
 		body:        nil,
 		result:      &res,

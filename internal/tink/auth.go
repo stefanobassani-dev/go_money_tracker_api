@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/go-querystring/query"
 	"github.com/stefanobassani-dev/money-tracker/internal/auth"
-	"github.com/stefanobassani-dev/money-tracker/internal/models"
 )
 
 func (c *Client) GetAuthorizationGrant(ctx context.Context, externalID string, scopes []string) (string, error) {
@@ -17,7 +16,7 @@ func (c *Client) GetAuthorizationGrant(ctx context.Context, externalID string, s
 		return "", err
 	}
 
-	req := models.AuthorizationRequest{
+	req := AuthorizationRequest{
 		ExternalID: externalID,
 		Scope:      strings.Join(scopes, ","),
 	}
@@ -26,7 +25,7 @@ func (c *Client) GetAuthorizationGrant(ctx context.Context, externalID string, s
 		return "", err
 	}
 
-	var res models.AuthorizationResponse
+	var res AuthorizationResponse
 
 	props := Props{
 		ctx:         ctx,
@@ -55,7 +54,7 @@ func (c *Client) GetAuthorizationGrantDelegate(ctx context.Context, externalID s
 
 	IDHint := ctx.Value(auth.UserIDKey).(string)
 
-	req := models.AuthorizationRequest{
+	req := AuthorizationRequest{
 		ExternalID:    externalID,
 		Scope:         strings.Join(scopes, ","),
 		IDHint:        IDHint,
@@ -66,7 +65,7 @@ func (c *Client) GetAuthorizationGrantDelegate(ctx context.Context, externalID s
 		return "", err
 	}
 
-	var res models.AuthorizationResponse
+	var res AuthorizationResponse
 
 	props := Props{
 		ctx:         ctx,
@@ -88,7 +87,7 @@ func (c *Client) GetAuthorizationGrantDelegate(ctx context.Context, externalID s
 }
 
 func (c *Client) GetUserToken(ctx context.Context, code string) (string, error) {
-	req := models.TokenRequest{
+	req := TokenRequest{
 		GrantType:    "authorization_code",
 		ClientID:     c.Cfg.ClientId,
 		ClientSecret: c.Cfg.ClientSecret,
@@ -99,7 +98,7 @@ func (c *Client) GetUserToken(ctx context.Context, code string) (string, error) 
 		return "", err
 	}
 
-	var res models.TokenResponse
+	var res TokenResponse
 
 	props := Props{
 		ctx:         ctx,

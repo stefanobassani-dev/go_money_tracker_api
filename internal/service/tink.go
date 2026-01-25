@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/stefanobassani-dev/money-tracker/internal/domain"
@@ -84,16 +83,5 @@ func (s *TinkService) SaveCredential(ctx context.Context, credentialID string, e
 		return err
 	}
 
-	entity := domain.Credential{
-		CredentialID: credential.ID,
-		UserID:       externalUserID,
-		TinkUserID:   credential.UserID,
-		ProviderName: credential.ProviderName,
-		Status:       credential.Status,
-		ExpiresAt:    time.Unix(0, credential.SessionExpiryDate*int64(time.Millisecond)),
-		LastUpdated:  time.Unix(0, credential.Updated*int64(time.Millisecond)),
-		Type:         credential.Type,
-	}
-
-	return s.credentialRepo.CreateCredential(ctx, entity)
+	return s.credentialRepo.CreateCredential(ctx, credential)
 }

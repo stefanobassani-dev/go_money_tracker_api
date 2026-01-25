@@ -4,18 +4,18 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/stefanobassani-dev/money-tracker/internal/models"
+	"github.com/stefanobassani-dev/money-tracker/internal/domain"
 )
 
 func (c *Client) GetUserCredential(ctx context.Context, credentialID string,
-	externalUserID string) (*models.Credential, error) {
+	externalUserID string) (domain.Credential, error) {
 	scopes := []string{"credentials:write", "credentials:read"}
 	accessToken, err := c.ExchangeUserToken(ctx, externalUserID, scopes)
 	if err != nil {
-		return nil, err
+		return domain.Credential{}, err
 	}
 
-	var res models.Credential
+	var res Credential
 	props := Props{
 		ctx:         ctx,
 		httpClient:  c.httpClient,
@@ -30,8 +30,8 @@ func (c *Client) GetUserCredential(ctx context.Context, credentialID string,
 
 	err = call(props)
 	if err != nil {
-		return nil, err
+		return domain.Credential{}, err
 	}
 
-	return &res, nil
+	return ToDomainCredential(&res, externalUserID), nil
 }

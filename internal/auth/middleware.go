@@ -30,7 +30,7 @@ func (m *Manager) JWTMiddleware(next http.Handler) http.Handler {
 
 		userID, err := m.Validate(tokenString)
 		if err != nil {
-			http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
+			json.Error(w, http.StatusUnauthorized, "Invalid or expired token")
 			return
 		}
 

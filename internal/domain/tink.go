@@ -2,8 +2,6 @@ package domain
 
 import (
 	"context"
-
-	"github.com/stefanobassani-dev/money-tracker/internal/models"
 )
 
 type TinkClient interface {
@@ -14,7 +12,7 @@ type TinkClient interface {
 	ExchangeUserToken(ctx context.Context, externalID string, scopes []string) (string, error)
 	GetAuthorizationGrantDelegate(ctx context.Context, externalID string, scopes []string) (string, error)
 	BuildUrl(code string, state string) string
-	GetUserCredential(ctx context.Context, credentialID string, externalID string) (*models.Credential, error)
+	GetUserCredential(ctx context.Context, credentialID string, externalID string) (Credential, error)
 }
 
 type TinkService interface {
