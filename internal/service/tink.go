@@ -5,11 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net/http"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/stefanobassani-dev/money-tracker/internal/domain"
-	"github.com/stefanobassani-dev/money-tracker/internal/tink"
 )
 
 type TinkService struct {
@@ -39,8 +37,7 @@ func (s *TinkService) GetOrCreateTinkUser(ctx context.Context, userID string) (s
 
 	tinkID, err := s.tink.CreateUser(ctx, userID)
 	if err != nil {
-		var tErr *tink.TinkError
-		if errors.As(err, &tErr) && tErr.StatusCode == http.StatusConflict {
+		if errors.Is(err, domain.ErrUserAlreadyExists) {
 			tinkID, err = s.tink.GetUserByExternalID(ctx, userID)
 			if err != nil {
 				return "", fmt.Errorf("failed to recover existing user from tink: %w", err)

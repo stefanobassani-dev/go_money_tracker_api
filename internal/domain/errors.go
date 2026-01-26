@@ -3,8 +3,14 @@ package domain
 import "errors"
 
 var (
-	ErrUserNotFound       = errors.New("user not found")
+	ErrUserNotFound      = errors.New("user not found")
+	ErrUserAlreadyExists = errors.New("user already exists")
+)
+
+var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
-	ErrUserAlreadyExists  = errors.New("user already exists")
-	ErrTokenInvalid       = errors.New("invalid token")
+)
+
+var (
+	ErrTokenInvalid = errors.New("invalid token")
 )

@@ -2,7 +2,10 @@ package tink
 
 import (
 	"context"
+	"errors"
 	"net/http"
+
+	"github.com/stefanobassani-dev/money-tracker/internal/domain"
 )
 
 func (c *Client) CreateUser(ctx context.Context, externalID string) (string, error) {
@@ -38,6 +41,10 @@ func (c *Client) CreateUser(ctx context.Context, externalID string) (string, err
 	}
 	err = call(props)
 	if err != nil {
+		var tErr *TinkError
+		if errors.As(err, &tErr) && tErr.StatusCode == http.StatusConflict {
+			return "", domain.ErrUserAlreadyExists
+		}
 		return "", err
 	}
 
