@@ -1,11 +1,10 @@
-package service
+package auth
 
 import (
 	"context"
 	"errors"
 	"log/slog"
 
-	"github.com/stefanobassani-dev/money-tracker/internal/auth"
 	"github.com/stefanobassani-dev/money-tracker/internal/domain"
 )
 
@@ -49,7 +48,7 @@ func (s *AuthService) Register(ctx context.Context, email string, password strin
 		return err
 	}
 
-	hashedPassword, err := auth.HashPassword(password)
+	hashedPassword, err := HashPassword(password)
 	if err != nil {
 		return err
 	}

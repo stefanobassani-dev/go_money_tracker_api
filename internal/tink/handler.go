@@ -1,4 +1,4 @@
-package handler
+package tink
 
 import (
 	"net/http"
