@@ -7,6 +7,7 @@ import (
 
 	_ "github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/stefanobassani-dev/money-tracker/internal/adapters/redis"
 	"github.com/stefanobassani-dev/money-tracker/internal/api"
 	"github.com/stefanobassani-dev/money-tracker/internal/config"
 )
@@ -28,6 +29,13 @@ func main() {
 		os.Exit(1)
 	}
 	defer pool.Close()
+
+	rdb, err := redis.NewClient(ctx, cfg.Redis)
+	if err != nil {
+		slog.Error("failed to connect to redis", "error", err)
+		os.Exit(1)
+	}
+	defer rdb.Close()
 
 	server := api.NewServer(cfg, pool)
 	server.Run()

@@ -14,6 +14,7 @@ type Config struct {
 	Server ServerConfig
 	Tink   TinkConfig
 	JWT    JWTConfig
+	Redis  RedisConfig
 }
 
 type DBConfig struct {
@@ -41,6 +42,12 @@ type TinkConfig struct {
 type JWTConfig struct {
 	Secret string
 	Expiry time.Duration
+}
+
+type RedisConfig struct {
+	Addr     string
+	Password string
+	DB       int
 }
 
 func (c *DBConfig) ConnectionString() string {
@@ -85,6 +92,11 @@ func Load() *Config {
 		JWT: JWTConfig{
 			Secret: getEnv("JWT_SECRET", ""),
 			Expiry: expiryDuration,
+		},
+		Redis: RedisConfig{
+			Addr:     getEnv("REDIS_ADDRESS", "localhost:6379"),
+			Password: getEnv("REDIS_PASSWORD", "password"),
+			DB:       0,
 		},
 	}
 }
