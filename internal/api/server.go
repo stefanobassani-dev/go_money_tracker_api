@@ -8,7 +8,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 	postgres2 "github.com/stefanobassani-dev/money-tracker/internal/adapters/postgres"
+	redis2 "github.com/stefanobassani-dev/money-tracker/internal/adapters/redis"
 	tink2 "github.com/stefanobassani-dev/money-tracker/internal/adapters/tink"
 	customMiddleware "github.com/stefanobassani-dev/money-tracker/internal/api/middleware"
 	"github.com/stefanobassani-dev/money-tracker/internal/auth"
@@ -20,18 +22,22 @@ import (
 type Server struct {
 	cfg *config.Config
 	db  *pgxpool.Pool
+	rdb *redis.Client
 }
 
-func NewServer(cfg *config.Config, db *pgxpool.Pool) *Server {
+func NewServer(cfg *config.Config, db *pgxpool.Pool, rdb *redis.Client) *Server {
 	return &Server{
 		cfg: cfg,
 		db:  db,
+		rdb: rdb,
 	}
 }
 
 func (s *Server) Mount() http.Handler {
 	r := chi.NewRouter()
 	setupMiddleware(r)
+
+	redisQueue := redis2.NewQueue(s.rdb)
 
 	tokenService := auth.NewTokenService(s.cfg.JWT.Secret, s.cfg.JWT.Expiry)
 	authMw := customMiddleware.AuthMiddleware(tokenService)
@@ -41,7 +47,7 @@ func (s *Server) Mount() http.Handler {
 
 	authHandler := setupAuth(userRepo, tokenService)
 	r.Mount("/auth", authHandler.Routes())
-	tinkHandler := setupTink(s, userRepo, credentialRepo, authMw)
+	tinkHandler := setupTink(s, userRepo, credentialRepo, authMw, redisQueue)
 	r.Mount("/tink", tinkHandler.Routes())
 
 	return r
@@ -74,13 +80,14 @@ func setupAuth(repo *postgres2.UserRepository,
 }
 
 func setupTink(s *Server, userRepo *postgres2.UserRepository,
-	credentialRepo *postgres2.CredentialRepository, authMw func(http.Handler) http.Handler) *tink.TinkHandler {
+	credentialRepo *postgres2.CredentialRepository, authMw func(http.Handler) http.Handler,
+	redisQueue *redis2.Queue) *tink.TinkHandler {
 	httpClient := http.Client{
 		Timeout: time.Second * 5,
 	}
 	tokenManager := tink2.NewTokenManager(&httpClient, &s.cfg.Tink)
 	tinkClient := tink2.NewTinkClient(&s.cfg.Tink, tokenManager, &httpClient)
-	tinkService := tink.NewTinkService(tinkClient, userRepo, credentialRepo)
+	tinkService := tink.NewTinkService(tinkClient, userRepo, credentialRepo, redisQueue)
 	tinkHandler := tink.NewTinkHandler(tinkService, authMw)
 	return tinkHandler
 }

@@ -15,14 +15,16 @@ type TinkService struct {
 	tink           domain.TinkClient
 	userRepo       domain.UserRepository
 	credentialRepo domain.CredentialRepository
+	redisQueue     domain.RedisQueue
 }
 
 func NewTinkService(t domain.TinkClient, userRepo domain.UserRepository,
-	credentialRepo domain.CredentialRepository) *TinkService {
+	credentialRepo domain.CredentialRepository, redisQueue domain.RedisQueue) *TinkService {
 	return &TinkService{
 		tink:           t,
 		userRepo:       userRepo,
 		credentialRepo: credentialRepo,
+		redisQueue:     redisQueue,
 	}
 }
 
@@ -78,14 +80,20 @@ func (s *TinkService) GetConnectURL(ctx context.Context, externalUserID string) 
 func (s *TinkService) SaveCredential(ctx context.Context, credentialID string, externalUserID string) error {
 	credential, err := s.tink.GetUserCredential(ctx, credentialID, externalUserID)
 	if err != nil {
+		slog.Error("error retrieving tink credential", "credentials_id", credentialID)
 		return err
 	}
 
 	err = s.credentialRepo.CreateCredential(ctx, credential)
-	if err != nil {
+	if err == nil {
 		slog.Info("credentials successfully saved on database", "credentials_id", credentialID)
 	} else {
 		slog.Error("error saving credentials on database", "credentials_id", credentialID)
+		err := s.redisQueue.EnqueueCredential(ctx, credentialID, externalUserID)
+		if err != nil {
+			slog.Error("error enqueuing in redis", "credentials_id", credentialID)
+			return err
+		}
 	}
-	return err
+	return nil
 }

@@ -14,8 +14,7 @@ import (
 
 func main() {
 	opts := &slog.HandlerOptions{
-		AddSource: true,
-		Level:     slog.LevelDebug,
+		Level: slog.LevelDebug,
 	}
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, opts))
 	slog.SetDefault(logger)
@@ -37,6 +36,6 @@ func main() {
 	}
 	defer rdb.Close()
 
-	server := api.NewServer(cfg, pool)
+	server := api.NewServer(cfg, pool, rdb)
 	server.Run()
 }
