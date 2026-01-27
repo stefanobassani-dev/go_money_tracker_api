@@ -3,22 +3,23 @@ package service
 import (
 	"context"
 	"errors"
+	"log/slog"
 
 	"github.com/stefanobassani-dev/money-tracker/internal/auth"
 	"github.com/stefanobassani-dev/money-tracker/internal/domain"
 )
 
 type AuthService struct {
-	provider domain.AuthProvider
-	jwt      *auth.Manager
-	repo     domain.UserRepository
+	provider     domain.AuthProvider
+	tokenService domain.TokenService
+	repo         domain.UserRepository
 }
 
-func NewAuthService(provider domain.AuthProvider, jwt *auth.Manager, repo domain.UserRepository) *AuthService {
+func NewAuthService(provider domain.AuthProvider, tokenService domain.TokenService, repo domain.UserRepository) *AuthService {
 	return &AuthService{
-		provider: provider,
-		jwt:      jwt,
-		repo:     repo,
+		provider:     provider,
+		tokenService: tokenService,
+		repo:         repo,
 	}
 }
 
@@ -28,7 +29,7 @@ func (s *AuthService) Login(ctx context.Context, email string, password string) 
 		return nil, nil, err
 	}
 
-	token, err := s.jwt.Generate(user.ID)
+	token, err := s.tokenService.Generate(user.ID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -40,6 +41,7 @@ func (s *AuthService) Register(ctx context.Context, email string, password strin
 	_, err := s.repo.FindByEmail(ctx, email)
 
 	if err == nil {
+		slog.Error("user already exists", "email", email)
 		return domain.ErrUserAlreadyExists
 	}
 

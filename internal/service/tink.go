@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"log/slog"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/stefanobassani-dev/money-tracker/internal/domain"
@@ -80,5 +81,11 @@ func (s *TinkService) SaveCredential(ctx context.Context, credentialID string, e
 		return err
 	}
 
-	return s.credentialRepo.CreateCredential(ctx, credential)
+	err = s.credentialRepo.CreateCredential(ctx, credential)
+	if err != nil {
+		slog.Info("credentials successfully saved on database", "credentials_id", credentialID)
+	} else {
+		slog.Error("error saving credentials on database", "credentials_id", credentialID)
+	}
+	return err
 }

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/google/go-querystring/query"
-	"github.com/stefanobassani-dev/money-tracker/internal/auth"
+	"github.com/stefanobassani-dev/money-tracker/internal/api/middleware"
 )
 
 func (c *Client) GetAuthorizationGrant(ctx context.Context, externalID string, scopes []string) (string, error) {
@@ -52,7 +52,7 @@ func (c *Client) GetAuthorizationGrantDelegate(ctx context.Context, externalID s
 		return "", err
 	}
 
-	IDHint := ctx.Value(auth.UserIDKey).(string)
+	IDHint := ctx.Value(middleware.UserIDKey).(string)
 
 	req := AuthorizationRequest{
 		ExternalID:    externalID,

@@ -1,4 +1,4 @@
-package auth
+package service
 
 import (
 	"time"
@@ -7,33 +7,33 @@ import (
 	"github.com/stefanobassani-dev/money-tracker/internal/domain"
 )
 
-type Manager struct {
+type TokenService struct {
 	secretKey     string
 	tokenDuration time.Duration
 }
 
-func NewManager(secretKey string, duration time.Duration) *Manager {
-	return &Manager{secretKey, duration}
+func NewTokenService(secretKey string, duration time.Duration) *TokenService {
+	return &TokenService{secretKey, duration}
 }
 
-func (m *Manager) Generate(userID string) (string, error) {
+func (t *TokenService) Generate(userID string) (string, error) {
 	claims := jwt.MapClaims{
 		"sub": userID,
-		"exp": time.Now().Add(m.tokenDuration).Unix(),
+		"exp": time.Now().Add(t.tokenDuration).Unix(),
 		"iat": time.Now().Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	return token.SignedString([]byte(m.secretKey))
+	return token.SignedString([]byte(t.secretKey))
 }
 
-func (m *Manager) Validate(tokenString string) (string, error) {
-	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
-		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+func (t *TokenService) Validate(tokenString string) (string, error) {
+	token, err := jwt.Parse(tokenString, func(j *jwt.Token) (interface{}, error) {
+		if _, ok := j.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, jwt.ErrSignatureInvalid
 		}
-		return []byte(m.secretKey), nil
+		return []byte(t.secretKey), nil
 	})
 
 	if err != nil {

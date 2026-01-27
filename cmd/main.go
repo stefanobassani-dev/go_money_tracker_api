@@ -2,27 +2,33 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
+	"os"
 
 	_ "github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stefanobassani-dev/money-tracker/internal/api"
-	"github.com/stefanobassani-dev/money-tracker/internal/auth"
 	"github.com/stefanobassani-dev/money-tracker/internal/config"
 )
 
 func main() {
+	opts := &slog.HandlerOptions{
+		AddSource: true,
+		Level:     slog.LevelDebug,
+	}
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, opts))
+	slog.SetDefault(logger)
+
 	cfg := config.Load()
 	ctx := context.Background()
 
 	pool, err := pgxpool.New(ctx, cfg.DB.ConnectionString())
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("failed to connect to database", "error", err)
+		os.Exit(1)
 	}
 	defer pool.Close()
 
-	jwtManager := auth.NewManager(cfg.JWT.Secret, cfg.JWT.Expiry)
-
-	server := api.NewServer(cfg, pool, jwtManager)
+	server := api.NewServer(cfg, pool)
 	server.Run()
 }

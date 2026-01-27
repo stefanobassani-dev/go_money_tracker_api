@@ -5,19 +5,19 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/stefanobassani-dev/money-tracker/internal/api/json"
-	"github.com/stefanobassani-dev/money-tracker/internal/auth"
+	"github.com/stefanobassani-dev/money-tracker/internal/api/middleware"
 	"github.com/stefanobassani-dev/money-tracker/internal/domain"
 )
 
 type TinkHandler struct {
-	service    domain.TinkService
-	jwtManager *auth.Manager
+	service domain.TinkService
+	authMw  func(http.Handler) http.Handler
 }
 
-func NewTinkHandler(service domain.TinkService, jwtManager *auth.Manager) *TinkHandler {
+func NewTinkHandler(service domain.TinkService, authMw func(http.Handler) http.Handler) *TinkHandler {
 	return &TinkHandler{
-		service:    service,
-		jwtManager: jwtManager,
+		service: service,
+		authMw:  authMw,
 	}
 }
 
@@ -26,7 +26,7 @@ func (h *TinkHandler) Routes() chi.Router {
 
 	r.Get("/callback", h.HandleCallback)
 	r.Group(func(r chi.Router) {
-		r.Use(h.jwtManager.JWTMiddleware)
+		r.Use(h.authMw)
 
 		r.Get("/link", h.GetConnectURL)
 	})
@@ -35,7 +35,7 @@ func (h *TinkHandler) Routes() chi.Router {
 }
 
 func (h *TinkHandler) GetConnectURL(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(auth.UserIDKey).(string)
+	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok {
 		json.Error(w, http.StatusUnauthorized, "unauthorized")
 	}
