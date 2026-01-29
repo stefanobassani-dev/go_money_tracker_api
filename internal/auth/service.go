@@ -45,6 +45,7 @@ func (s *AuthService) Register(ctx context.Context, email string, password strin
 	}
 
 	if !errors.Is(err, domain.ErrUserNotFound) {
+		slog.Error("database error", "err", err)
 		return err
 	}
 
