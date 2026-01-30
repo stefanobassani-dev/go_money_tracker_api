@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/lmittmann/tint"
 	"github.com/redis/go-redis/v9"
+	"github.com/stefanobassani-dev/money-tracker/internal/account"
 	"github.com/stefanobassani-dev/money-tracker/internal/adapters/postgres"
 	redis2 "github.com/stefanobassani-dev/money-tracker/internal/adapters/redis"
 	tink2 "github.com/stefanobassani-dev/money-tracker/internal/adapters/tink"
@@ -32,15 +33,16 @@ type App struct {
 	credentialHandler *credential.Handler
 
 	//service
-	authService domain.AuthService
-
+	authService       domain.AuthService
 	tokenService      domain.TokenService
 	credentialService domain.CredentialService
 	userService       domain.UserService
+	accountService    domain.AccountService
 
 	//repository
-	credentialRepo domain.CredentialRepository
-	userRepo       domain.UserRepository
+	credentialRepo    domain.CredentialRepository
+	userRepo          domain.UserRepository
+	accountRepository domain.AccountRepository
 
 	redisQueue domain.Queue
 
@@ -95,6 +97,9 @@ func Bootstrap(ctx context.Context) *App {
 	authService := auth.NewAuthService(provider, tokenService, userRepo)
 	authHandler := auth.NewAuthHandler(authService)
 
+	accountRepository := postgres.NewAccountRepository(pool)
+	accountService := account.NewAccountService(accountRepository)
+
 	credentialWorker := worker.NewCredential(redisQueue, tinkClient, credentialRepo)
 	syncWorker := worker.NewSync(redisQueue)
 
@@ -110,9 +115,11 @@ func Bootstrap(ctx context.Context) *App {
 		authService:       authService,
 		credentialService: credentialService,
 		userService:       userService,
+		accountService:    accountService,
 
-		userRepo:       userRepo,
-		credentialRepo: credentialRepo,
+		userRepo:          userRepo,
+		credentialRepo:    credentialRepo,
+		accountRepository: accountRepository,
 
 		tinkClient: tinkClient,
 		httpClient: httpClient,

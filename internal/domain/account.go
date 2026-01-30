@@ -1,11 +1,9 @@
 package domain
 
 import (
-	"context"
 	"time"
 )
 
-// AccountType definisce i tipi di conto supportati
 type AccountType string
 
 const (
@@ -32,6 +30,9 @@ type Account struct {
 }
 
 type AccountRepository interface {
-	Upsert(ctx context.Context, account Account) error
-	ListByUserID(ctx context.Context, userID string) ([]Account, error)
+	//Upsert(ctx context.Context, account Account) error
+	//ListByUserID(ctx context.Context, userID string) ([]Account, error)
+}
+
+type AccountService interface {
 }
