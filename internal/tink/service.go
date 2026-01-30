@@ -78,23 +78,22 @@ func (s *TinkService) GetConnectURL(ctx context.Context, externalUserID string) 
 }
 
 func (s *TinkService) SaveCredential(ctx context.Context, credentialID string, externalUserID string) error {
-	credential, err := s.tink.GetUserCredential(ctx, credentialID, externalUserID)
+	err := s.credentialRepo.CreatePendingCredential(ctx, credentialID, externalUserID)
 	if err != nil {
-		slog.Error("error retrieving tink credential", "credentials_id", credentialID)
+		slog.Error("error saving pending credential on database", "credentials_id", credentialID)
 		return err
 	}
 
-	err = s.credentialRepo.CreateCredential(ctx, credential)
-	if err == nil {
-		slog.Info("credentials successfully saved on database", "credentials_id", credentialID)
-	} else {
-		slog.Error("error saving credentials on database", "credentials_id", credentialID)
-		err := s.redisQueue.EnqueueCredential(ctx, credentialID, externalUserID)
-		if err != nil {
-			slog.Error("[CRITICAL] error enqueuing in redis", "credentials_id",
-				credentialID, "user_id", externalUserID)
-			return err
-		}
+	err = s.redisQueue.EnqueueCredential(ctx, credentialID, externalUserID)
+	if err != nil {
+		slog.Error("[CRITICAL] error enqueuing in redis", "credentials_id",
+			credentialID, "user_id", externalUserID)
+		// TODO Nota: Qui potremmo voler fare rollback del DB o segnare come FAILED,
+		// ma per ora ritorniamo errore così il client sa che qualcosa è andato storto.
+		return err
 	}
+
+	slog.Info("credential successfully enqueued", "credentials_id", credentialID,
+		"user_id", externalUserID)
 	return nil
 }

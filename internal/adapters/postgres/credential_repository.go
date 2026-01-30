@@ -42,3 +42,19 @@ func (r *CredentialRepository) CreateCredential(ctx context.Context, c domain.Cr
 
 	return err
 }
+
+func (r *CredentialRepository) CreatePendingCredential(ctx context.Context, credentialID string, userID string) error {
+	sql := `
+		INSERT INTO credentials (
+			tink_credential_id, 
+			user_id,
+			status,
+			updated,
+			provider_name
+		) 
+		VALUES ($1, $2, 'PENDING', NOW(), 'UNKNOWN')
+		ON CONFLICT (tink_credential_id) DO NOTHING;`
+
+	_, err := r.db.Exec(ctx, sql, credentialID, userID)
+	return err
+}
