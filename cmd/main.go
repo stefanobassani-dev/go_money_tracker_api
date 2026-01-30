@@ -13,6 +13,7 @@ func main() {
 	defer app.Shutdown()
 
 	go app.CredentialWorker.Run(ctx)
+	go app.SyncWorker.Run(ctx)
 
 	server := api.NewServer(app)
 	server.Run()

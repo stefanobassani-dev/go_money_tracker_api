@@ -16,7 +16,22 @@ type Credential struct {
 	Type         string
 }
 
+type ProviderConsent struct {
+	CredentialsID     string
+	ProviderName      string
+	Status            string
+	SessionExpiryDate time.Time
+	SessionExtendable bool
+	AccountIDs        []string
+	StatusUpdated     time.Time
+}
+
 type CredentialRepository interface {
 	CreateCredential(ctx context.Context, credential Credential) error
 	CreatePendingCredential(ctx context.Context, credentialID string, userID string) error
+}
+
+type CredentialService interface {
+	GetConnectURL(ctx context.Context, externalUserID string) (string, error)
+	SaveCredential(ctx context.Context, credentialID string, externalUserID string) error
 }

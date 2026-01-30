@@ -61,3 +61,45 @@ func (q *Queue) DequeueCredential(ctx context.Context, timeout time.Duration) (d
 
 	return payload, nil
 }
+
+func (q *Queue) EnqueueSync(ctx context.Context, userID, credID string) error {
+	payload := domain.SyncJobPayload{
+		UserID:       userID,
+		CredentialID: credID,
+	}
+
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("failed to marshal sync job: %w", err)
+	}
+
+	err = q.rdb.LPush(ctx, SyncJobsQueue, data).Err()
+	if err != nil {
+		slog.Error("failed to push sync job to redis", "credential_id", credID, "user_id", userID)
+		return fmt.Errorf("failed to push to redis: %w", err)
+	}
+
+	return nil
+}
+
+func (q *Queue) DequeueSync(ctx context.Context, timeout time.Duration) (domain.SyncJobPayload, error) {
+	result, err := q.rdb.BRPop(ctx, timeout, SyncJobsQueue).Result()
+
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return domain.SyncJobPayload{}, domain.ErrNoJob
+		}
+		return domain.SyncJobPayload{}, fmt.Errorf("failed to dequeue sync job: %w", err)
+	}
+
+	if len(result) != 2 {
+		return domain.SyncJobPayload{}, fmt.Errorf("invalid result from redis: %v", result)
+	}
+
+	var payload domain.SyncJobPayload
+	if err := json.Unmarshal([]byte(result[1]), &payload); err != nil {
+		return domain.SyncJobPayload{}, fmt.Errorf("failed to unmarshal sync job payload: %w", err)
+	}
+
+	return payload, nil
+}

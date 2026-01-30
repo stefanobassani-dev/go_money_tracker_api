@@ -16,8 +16,9 @@ import (
 	customMiddleware "github.com/stefanobassani-dev/money-tracker/internal/api/middleware"
 	"github.com/stefanobassani-dev/money-tracker/internal/auth"
 	"github.com/stefanobassani-dev/money-tracker/internal/config"
+	"github.com/stefanobassani-dev/money-tracker/internal/credential"
 	"github.com/stefanobassani-dev/money-tracker/internal/domain"
-	"github.com/stefanobassani-dev/money-tracker/internal/tink"
+	"github.com/stefanobassani-dev/money-tracker/internal/user"
 	"github.com/stefanobassani-dev/money-tracker/internal/worker"
 )
 
@@ -27,13 +28,15 @@ type App struct {
 	rdb *redis.Client
 
 	//handler
-	authHandler *auth.AuthHandler
-	tinkHandler *tink.TinkHandler
+	authHandler       *auth.Handler
+	credentialHandler *credential.Handler
 
 	//service
-	authService  domain.AuthService
-	tinkService  domain.TinkService
-	tokenService domain.TokenService
+	authService domain.AuthService
+
+	tokenService      domain.TokenService
+	credentialService domain.CredentialService
+	userService       domain.UserService
 
 	//repository
 	credentialRepo domain.CredentialRepository
@@ -45,11 +48,9 @@ type App struct {
 	tinkClient domain.TinkClient
 	httpClient *http.Client
 
-	//middleware
-	authMw func(http.Handler) http.Handler
-
 	//worker
 	CredentialWorker *worker.Credential
+	SyncWorker       *worker.Sync
 }
 
 func Bootstrap(ctx context.Context) *App {
@@ -74,7 +75,6 @@ func Bootstrap(ctx context.Context) *App {
 	}
 
 	tokenService := auth.NewTokenService(cfg.JWT.Secret, cfg.JWT.Expiry)
-	authMw := customMiddleware.AuthMiddleware(tokenService)
 	redisQueue := redis2.NewQueue(rdb)
 	credentialRepo := postgres.NewCredentialRepository(pool)
 	userRepo := postgres.NewUserRepository(pool)
@@ -83,26 +83,33 @@ func Bootstrap(ctx context.Context) *App {
 	}
 	tokenManager := tink2.NewTokenManager(httpClient, &cfg.Tink)
 	tinkClient := tink2.NewTinkClient(&cfg.Tink, tokenManager, httpClient)
-	tinkService := tink.NewTinkService(tinkClient, userRepo, credentialRepo, redisQueue)
-	tinkHandler := tink.NewTinkHandler(tinkService, authMw)
+
+	userService := user.NewService(userRepo, tinkClient)
+
+	authMiddleware := customMiddleware.AuthMiddleware(tokenService)
+
+	credentialService := credential.NewService(credentialRepo, tinkClient, redisQueue)
+	credentialHandler := credential.NewHandler(credentialService, userService, authMiddleware)
 
 	provider := auth.NewEmailPasswordAuth(userRepo)
 	authService := auth.NewAuthService(provider, tokenService, userRepo)
 	authHandler := auth.NewAuthHandler(authService)
 
 	credentialWorker := worker.NewCredential(redisQueue, tinkClient, credentialRepo)
+	syncWorker := worker.NewSync(redisQueue)
 
 	return &App{
 		cfg: cfg,
 		db:  pool,
 		rdb: rdb,
 
-		tinkHandler: tinkHandler,
-		authHandler: authHandler,
+		authHandler:       authHandler,
+		credentialHandler: credentialHandler,
 
-		tinkService:  tinkService,
-		tokenService: tokenService,
-		authService:  authService,
+		tokenService:      tokenService,
+		authService:       authService,
+		credentialService: credentialService,
+		userService:       userService,
 
 		userRepo:       userRepo,
 		credentialRepo: credentialRepo,
@@ -110,11 +117,10 @@ func Bootstrap(ctx context.Context) *App {
 		tinkClient: tinkClient,
 		httpClient: httpClient,
 
-		authMw: authMw,
-
 		redisQueue: redisQueue,
 
 		CredentialWorker: credentialWorker,
+		SyncWorker:       syncWorker,
 	}
 }
 

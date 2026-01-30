@@ -9,17 +9,17 @@ import (
 	"github.com/stefanobassani-dev/money-tracker/internal/domain"
 )
 
-type AuthHandler struct {
+type Handler struct {
 	service domain.AuthService
 }
 
-func NewAuthHandler(service domain.AuthService) *AuthHandler {
-	return &AuthHandler{
+func NewAuthHandler(service domain.AuthService) *Handler {
+	return &Handler{
 		service: service,
 	}
 }
 
-func (h *AuthHandler) Routes() chi.Router {
+func (h *Handler) Routes() chi.Router {
 	r := chi.NewRouter()
 
 	r.Post("/login", h.Login)
@@ -28,7 +28,7 @@ func (h *AuthHandler) Routes() chi.Router {
 	return r
 }
 
-func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
 	err := json.Decode(r, &req)
 	if err != nil {
@@ -59,7 +59,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	json.Success(w, http.StatusOK, map[string]any{"user": user, "token": token})
 }
 
-func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
 	err := json.Decode(r, &req)
 	if err != nil {

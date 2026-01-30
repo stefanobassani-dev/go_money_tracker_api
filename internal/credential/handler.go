@@ -1,4 +1,4 @@
-package tink
+package credential
 
 import (
 	"net/http"
@@ -9,24 +9,27 @@ import (
 	"github.com/stefanobassani-dev/money-tracker/internal/domain"
 )
 
-type TinkHandler struct {
-	service domain.TinkService
-	authMw  func(http.Handler) http.Handler
+type Handler struct {
+	credentialService domain.CredentialService
+	userService       domain.UserService
+	authMiddleware    func(http.Handler) http.Handler
 }
 
-func NewTinkHandler(service domain.TinkService, authMw func(http.Handler) http.Handler) *TinkHandler {
-	return &TinkHandler{
-		service: service,
-		authMw:  authMw,
+func NewHandler(credentialService domain.CredentialService, userService domain.UserService,
+	authMiddleware func(http.Handler) http.Handler) *Handler {
+	return &Handler{
+		credentialService: credentialService,
+		userService:       userService,
+		authMiddleware:    authMiddleware,
 	}
 }
 
-func (h *TinkHandler) Routes() chi.Router {
+func (h *Handler) Routes() chi.Router {
 	r := chi.NewRouter()
 
 	r.Get("/callback", h.HandleCallback)
 	r.Group(func(r chi.Router) {
-		r.Use(h.authMw)
+		r.Use(h.authMiddleware)
 
 		r.Get("/link", h.GetConnectURL)
 	})
@@ -34,20 +37,20 @@ func (h *TinkHandler) Routes() chi.Router {
 	return r
 }
 
-func (h *TinkHandler) GetConnectURL(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetConnectURL(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok {
 		json.Error(w, http.StatusUnauthorized, "unauthorized")
 	}
 	ctx := r.Context()
 
-	_, err := h.service.GetOrCreateTinkUser(ctx, userID)
+	_, err := h.userService.GetOrCreateTinkUser(ctx, userID)
 	if err != nil {
 		json.Error(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
-	link, err := h.service.GetConnectURL(ctx, userID)
+	link, err := h.credentialService.GetConnectURL(ctx, userID)
 	if err != nil {
 		json.Error(w, http.StatusInternalServerError, "internal server error")
 		return
@@ -61,7 +64,7 @@ func (h *TinkHandler) GetConnectURL(w http.ResponseWriter, r *http.Request) {
 	json.Success(w, http.StatusOK, response)
 }
 
-func (h *TinkHandler) HandleCallback(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) HandleCallback(w http.ResponseWriter, r *http.Request) {
 	credentialID := r.URL.Query().Get("credentialsId")
 	externalUserID := r.URL.Query().Get("state")
 	errorType := r.URL.Query().Get("error")
@@ -77,7 +80,7 @@ func (h *TinkHandler) HandleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.service.SaveCredential(r.Context(), credentialID, externalUserID)
+	err := h.credentialService.SaveCredential(r.Context(), credentialID, externalUserID)
 	if err != nil {
 		json.Error(w, http.StatusInternalServerError, "internal server error")
 		return

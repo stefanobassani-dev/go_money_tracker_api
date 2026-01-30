@@ -25,7 +25,7 @@ func NewCredential(redisQueue domain.Queue, tinkClient domain.TinkClient,
 }
 
 func (w *Credential) Run(ctx context.Context) {
-	slog.Error("credential worker started")
+	slog.Info("credential worker started")
 
 	for {
 		select {
@@ -48,7 +48,7 @@ func (w *Credential) processNext(ctx context.Context) {
 		return
 	}
 
-	slog.Info("processing job", "credential_id", job.CredentialID)
+	slog.Info("processing credential job", "credential_id", job.CredentialID)
 
 	credential, err := w.tinkClient.GetUserCredential(ctx, job.CredentialID, job.UserID)
 	if err != nil {
@@ -61,6 +61,14 @@ func (w *Credential) processNext(ctx context.Context) {
 	if err != nil {
 		slog.Error("failed to save to db", "credential_id", job.CredentialID, "error", err)
 		return
+	}
+
+	err = w.redisQueue.EnqueueSync(ctx, job.CredentialID, job.UserID)
+	if err != nil {
+		slog.Error("[CRITICAL] error enqueuing in redis", "credentials_id",
+			job.CredentialID, "user_id", job.UserID)
+		// TODO Nota: Qui potremmo voler fare rollback del DB o segnare come FAILED,
+		// ma per ora ritorniamo errore così il client sa che qualcosa è andato storto.
 	}
 
 }

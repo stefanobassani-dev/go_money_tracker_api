@@ -60,3 +60,23 @@ func parseBalance(val Value) float64 {
 
 	return float64(unscaled) * math.Pow(10, -float64(scale))
 }
+
+func ToDomainProviderConsentList(dtos []ProviderConsent) []domain.ProviderConsent {
+	result := make([]domain.ProviderConsent, len(dtos))
+	for i, dto := range dtos {
+		result[i] = ToDomainProviderConsent(dto)
+	}
+	return result
+}
+
+func ToDomainProviderConsent(dto ProviderConsent) domain.ProviderConsent {
+	return domain.ProviderConsent{
+		CredentialsID:     dto.CredentialsId,
+		ProviderName:      dto.ProviderName,
+		Status:            dto.Status,
+		SessionExpiryDate: time.Unix(0, dto.SessionExpiryDate*int64(time.Millisecond)),
+		SessionExtendable: dto.SessionExtendable,
+		AccountIDs:        dto.AccountIds,
+		StatusUpdated:     time.Unix(0, dto.StatusUpdated*int64(time.Millisecond)),
+	}
+}

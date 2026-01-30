@@ -12,6 +12,10 @@ type UserRepository interface {
 	UpdateTinkID(ctx context.Context, userID string, newTinkID string) error
 }
 
+type UserService interface {
+	GetOrCreateTinkUser(ctx context.Context, userID string) (string, error)
+}
+
 type User struct {
 	ID         string    `json:"id"`
 	Email      string    `json:"email"`

@@ -8,21 +8,21 @@ import (
 	"github.com/stefanobassani-dev/money-tracker/internal/domain"
 )
 
-type AuthService struct {
+type Service struct {
 	provider     domain.AuthProvider
 	tokenService domain.TokenService
 	repo         domain.UserRepository
 }
 
-func NewAuthService(provider domain.AuthProvider, tokenService domain.TokenService, repo domain.UserRepository) *AuthService {
-	return &AuthService{
+func NewAuthService(provider domain.AuthProvider, tokenService domain.TokenService, repo domain.UserRepository) *Service {
+	return &Service{
 		provider:     provider,
 		tokenService: tokenService,
 		repo:         repo,
 	}
 }
 
-func (s *AuthService) Login(ctx context.Context, email string, password string) (*domain.User, *string, error) {
+func (s *Service) Login(ctx context.Context, email string, password string) (*domain.User, *string, error) {
 	user, err := s.provider.Authenticate(ctx, email, password)
 	if err != nil {
 		return nil, nil, err
@@ -36,7 +36,7 @@ func (s *AuthService) Login(ctx context.Context, email string, password string) 
 	return user, &token, nil
 }
 
-func (s *AuthService) Register(ctx context.Context, email string, password string) error {
+func (s *Service) Register(ctx context.Context, email string, password string) error {
 	_, err := s.repo.FindByEmail(ctx, email)
 
 	if err == nil {

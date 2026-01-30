@@ -145,3 +145,17 @@ type FinancialInstitution struct {
 type Dates struct {
 	LastRefreshed time.Time `json:"lastRefreshed"`
 }
+
+type ProviderConsentsResponse struct {
+	ProviderConsents []ProviderConsent `json:"providerConsents"`
+}
+
+type ProviderConsent struct {
+	CredentialsId     string   `json:"credentialsId"`
+	ProviderName      string   `json:"providerName"`
+	Status            string   `json:"status"`
+	SessionExpiryDate int64    `json:"sessionExpiryDate"`
+	SessionExtendable bool     `json:"sessionExtendable"`
+	AccountIds        []string `json:"accountIds"`
+	StatusUpdated     int64    `json:"statusUpdated"`
+}

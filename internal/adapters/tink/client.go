@@ -17,6 +17,7 @@ const (
 	PathAuthorizeDelegate APIPath = "/api/v1/oauth/authorization-grant/delegate"
 	PathGetCredential     APIPath = "/api/v1/credentials/"
 	PathListAccounts      APIPath = "/data/v2/accounts"
+	PathProviderConsent   APIPath = "/api/v1/provider-consents"
 )
 
 type ContentType string
@@ -30,7 +31,6 @@ const TinkActorClientID = "df05e4b379934cd09963197cc855bfe9"
 const ApiConnectURL = "https://link.tink.com/1.0/transactions/connect-accounts"
 
 type Client struct {
-	//TODO verificare se davvero utilizzate, sennò rimuovere
 	Cfg          *config.TinkConfig
 	TokenManager *TokenManager
 	httpClient   *http.Client

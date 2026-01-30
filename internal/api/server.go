@@ -25,7 +25,7 @@ func (s *Server) Mount() http.Handler {
 	setupMiddleware(r)
 
 	r.Mount("/auth", s.app.authHandler.Routes())
-	r.Mount("/tink", s.app.tinkHandler.Routes())
+	r.Mount("/credentials", s.app.credentialHandler.Routes())
 
 	return r
 }
