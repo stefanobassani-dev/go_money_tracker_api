@@ -16,6 +16,7 @@ const (
 	PathAuthorize         APIPath = "/api/v1/oauth/authorization-grant"
 	PathAuthorizeDelegate APIPath = "/api/v1/oauth/authorization-grant/delegate"
 	PathGetCredential     APIPath = "/api/v1/credentials/"
+	PathListAccounts      APIPath = "/data/v2/accounts"
 )
 
 type ContentType string

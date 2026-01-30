@@ -27,22 +27,15 @@ func (r *CredentialRepository) CreateCredential(ctx context.Context, c domain.Cr
 			user_id,
 		    type
 		) 
-		VALUES (
-			$1,
-			$2,
-			$3,
-			$4,
-			$5,
-			$6,
-			$7,
-		    $8
-		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		ON CONFLICT (tink_credential_id) 
 		DO UPDATE SET 
 			status = EXCLUDED.status,
 			updated = EXCLUDED.updated,
 			session_expiry_date = EXCLUDED.session_expiry_date,
-			tink_user_id = EXCLUDED.tink_user_id;`
+			tink_user_id = EXCLUDED.tink_user_id,
+			provider_name = EXCLUDED.provider_name,
+			type = EXCLUDED.type;`
 
 	_, err := r.db.Exec(ctx, sql, c.CredentialID, c.ProviderName,
 		c.Status, c.LastUpdated, c.ExpiresAt, c.TinkUserID, c.UserID, c.Type)

@@ -1,5 +1,7 @@
 package tink
 
+import "time"
+
 type AuthorizationRequest struct {
 	ActorClientID string `url:"actor_client_id"`
 	ExternalID    string `url:"external_user_id"`
@@ -88,4 +90,58 @@ type NotificationSettings struct {
 	Transaction     bool `json:"transaction"`
 	UnusualAccount  bool `json:"unusualAccount"`
 	UnusualCategory bool `json:"unusualCategory"`
+}
+
+type AccountResponse struct {
+	Accounts      []Account `json:"accounts"`
+	NextPageToken string    `json:"nextPageToken"`
+}
+
+type Account struct {
+	ID                     string      `json:"id"`
+	Name                   string      `json:"name"`
+	Type                   string      `json:"type"`
+	Balances               Balances    `json:"balances"`
+	Identifiers            Identifiers `json:"identifiers"`
+	Dates                  Dates       `json:"dates"`
+	FinancialInstitutionID string      `json:"financialInstitutionId"`
+	CustomerSegment        string      `json:"customerSegment"`
+}
+
+type Balances struct {
+	Booked    BalanceDetails `json:"booked"`
+	Available BalanceDetails `json:"available"`
+}
+
+type BalanceDetails struct {
+	Amount Amount `json:"amount"`
+}
+
+type Amount struct {
+	Value        Value  `json:"value"`
+	CurrencyCode string `json:"currencyCode"`
+}
+
+type Value struct {
+	UnscaledValue string `json:"unscaledValue"`
+	Scale         string `json:"scale"`
+}
+
+type Identifiers struct {
+	Iban                 Iban                 `json:"iban"`
+	FinancialInstitution FinancialInstitution `json:"financialInstitution"`
+}
+
+type Iban struct {
+	Iban string `json:"iban"`
+	Bban string `json:"bban"`
+}
+
+type FinancialInstitution struct {
+	AccountNumber    string                 `json:"accountNumber"`
+	ReferenceNumbers map[string]interface{} `json:"referenceNumbers"`
+}
+
+type Dates struct {
+	LastRefreshed time.Time `json:"lastRefreshed"`
 }

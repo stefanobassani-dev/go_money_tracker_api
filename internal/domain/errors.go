@@ -14,3 +14,7 @@ var (
 var (
 	ErrTokenInvalid = errors.New("invalid token")
 )
+
+var (
+	ErrNoJob = errors.New("no jobs in queue")
+)

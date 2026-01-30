@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/stefanobassani-dev/money-tracker/internal/domain"
 )
@@ -19,6 +20,7 @@ func NewEmailPasswordAuth(repo domain.UserRepository) *EmailPasswordProvider {
 func (p *EmailPasswordProvider) Authenticate(ctx context.Context, email string, password string) (*domain.User, error) {
 	user, err := p.repo.FindByEmail(ctx, email)
 	if err != nil {
+		slog.Error("database error", "err", err)
 		return nil, err
 	}
 

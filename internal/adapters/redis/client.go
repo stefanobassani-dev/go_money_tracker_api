@@ -21,3 +21,8 @@ func NewClient(ctx context.Context, cfg config.RedisConfig) (*redis.Client, erro
 
 	return client, nil
 }
+
+var (
+	CredentialsJobsQueue = "credential_ingestion"
+	SyncJobsQueue        = "data_sync"
+)
