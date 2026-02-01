@@ -19,6 +19,7 @@ import (
 	"github.com/stefanobassani-dev/money-tracker/internal/config"
 	"github.com/stefanobassani-dev/money-tracker/internal/credential"
 	"github.com/stefanobassani-dev/money-tracker/internal/domain"
+	"github.com/stefanobassani-dev/money-tracker/internal/transaction"
 	"github.com/stefanobassani-dev/money-tracker/internal/user"
 	"github.com/stefanobassani-dev/money-tracker/internal/worker"
 )
@@ -33,11 +34,12 @@ type App struct {
 	credentialHandler *credential.Handler
 
 	//service
-	authService       domain.AuthService
-	tokenService      domain.TokenService
-	credentialService domain.CredentialService
-	userService       domain.UserService
-	accountService    domain.AccountService
+	authService        domain.AuthService
+	tokenService       domain.TokenService
+	credentialService  domain.CredentialService
+	userService        domain.UserService
+	accountService     domain.AccountService
+	transactionService domain.TransactionService
 
 	//repository
 	credentialRepo    domain.CredentialRepository
@@ -98,10 +100,13 @@ func Bootstrap(ctx context.Context) *App {
 	authHandler := auth.NewAuthHandler(authService)
 
 	accountRepository := postgres.NewAccountRepository(pool)
-	accountService := account.NewAccountService(accountRepository)
+	accountService := account.NewService(accountRepository, tinkClient)
+
+	transactionRepository := postgres.NewTransactionRepository(pool)
+	transactionService := transaction.NewService(transactionRepository, tinkClient)
 
 	credentialWorker := worker.NewCredential(redisQueue, tinkClient, credentialRepo)
-	syncWorker := worker.NewSync(redisQueue)
+	syncWorker := worker.NewSync(redisQueue, accountService)
 
 	return &App{
 		cfg: cfg,
@@ -111,11 +116,12 @@ func Bootstrap(ctx context.Context) *App {
 		authHandler:       authHandler,
 		credentialHandler: credentialHandler,
 
-		tokenService:      tokenService,
-		authService:       authService,
-		credentialService: credentialService,
-		userService:       userService,
-		accountService:    accountService,
+		tokenService:       tokenService,
+		authService:        authService,
+		credentialService:  credentialService,
+		userService:        userService,
+		accountService:     accountService,
+		transactionService: transactionService,
 
 		userRepo:          userRepo,
 		credentialRepo:    credentialRepo,

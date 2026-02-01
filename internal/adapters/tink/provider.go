@@ -2,6 +2,7 @@ package tink
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 
 	"github.com/stefanobassani-dev/money-tracker/internal/domain"
@@ -11,11 +12,12 @@ func (c *Client) ProviderConsent(ctx context.Context, externalUserID string) ([]
 	scopes := []string{"credentials:refresh", "provider-consents:read"}
 	accessToken, err := c.ExchangeUserToken(ctx, externalUserID, scopes)
 	if err != nil {
+		slog.Error("failed to exchange tink user access token")
 		return []domain.ProviderConsent{}, err
 	}
 
 	var res = struct {
-		providerConsent []ProviderConsent
+		ProviderConsents []ProviderConsent
 	}{}
 	props := Props{
 		ctx:         ctx,
@@ -34,5 +36,5 @@ func (c *Client) ProviderConsent(ctx context.Context, externalUserID string) ([]
 		return []domain.ProviderConsent{}, err
 	}
 
-	return ToDomainProviderConsentList(res.providerConsent), nil
+	return ToDomainProviderConsentList(res.ProviderConsents), nil
 }

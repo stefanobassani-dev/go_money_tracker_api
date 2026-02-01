@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"time"
 )
 
@@ -30,9 +31,9 @@ type Account struct {
 }
 
 type AccountRepository interface {
-	//Upsert(ctx context.Context, account Account) error
-	//ListByUserID(ctx context.Context, userID string) ([]Account, error)
+	CreateCredential(ctx context.Context, a Account, credentialID string) error
 }
 
 type AccountService interface {
+	SaveAccountsByCredentialID(ctx context.Context, credentialID, userID string) error
 }

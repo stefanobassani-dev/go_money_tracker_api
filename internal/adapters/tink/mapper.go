@@ -80,3 +80,34 @@ func ToDomainProviderConsent(dto ProviderConsent) domain.ProviderConsent {
 		StatusUpdated:     time.Unix(0, dto.StatusUpdated*int64(time.Millisecond)),
 	}
 }
+
+func ToDomainTransactionList(dtos []Transaction) []domain.Transaction {
+	result := make([]domain.Transaction, len(dtos))
+	for i, dto := range dtos {
+		result[i] = ToDomainTransaction(dto)
+	}
+	return result
+}
+
+func ToDomainTransaction(dto Transaction) domain.Transaction {
+	amount := parseBalance(dto.Amount.Value)
+
+	return domain.Transaction{
+		ID:                    dto.ID,
+		AccountID:             dto.AccountID,
+		ProviderTransactionID: dto.Identifiers.ProviderTransactionID,
+		Amount:                amount,
+		Currency:              dto.Amount.CurrencyCode,
+		Description:           dto.Descriptions.Display,
+		RawDescription:        dto.Descriptions.Original,
+		Date:                  dto.TransactionDateTime,
+		BookedDate:            dto.BookedDateTime,
+		ValueDate:             dto.ValueDateTime,
+		Status:                dto.Status,
+		CategoryID:            dto.Categories.Pfm.ID,
+		MerchantName:          dto.MerchantInformation.MerchantName,
+		MerchantCategoryCode:  dto.MerchantInformation.MerchantCategoryCode,
+		CreatedAt:             time.Now(),
+		UpdatedAt:             time.Now(),
+	}
+}

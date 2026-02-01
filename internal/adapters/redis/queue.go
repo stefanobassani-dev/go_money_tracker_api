@@ -62,7 +62,7 @@ func (q *Queue) DequeueCredential(ctx context.Context, timeout time.Duration) (d
 	return payload, nil
 }
 
-func (q *Queue) EnqueueSync(ctx context.Context, userID, credID string) error {
+func (q *Queue) EnqueueSync(ctx context.Context, credID, userID string) error {
 	payload := domain.SyncJobPayload{
 		UserID:       userID,
 		CredentialID: credID,

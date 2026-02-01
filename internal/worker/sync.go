@@ -10,12 +10,14 @@ import (
 )
 
 type Sync struct {
-	redisQueue domain.Queue
+	redisQueue     domain.Queue
+	accountService domain.AccountService
 }
 
-func NewSync(redisQueue domain.Queue) *Sync {
+func NewSync(redisQueue domain.Queue, accountService domain.AccountService) *Sync {
 	return &Sync{
-		redisQueue: redisQueue,
+		redisQueue:     redisQueue,
+		accountService: accountService,
 	}
 }
 
@@ -44,5 +46,10 @@ func (w *Sync) processNext(ctx context.Context) {
 	}
 
 	slog.Info("processing sync job", "credential_id", job.CredentialID)
+
+	err = w.accountService.SaveAccountsByCredentialID(ctx, job.CredentialID, job.UserID)
+	if err != nil {
+		return
+	}
 
 }

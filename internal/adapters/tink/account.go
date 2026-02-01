@@ -15,7 +15,7 @@ func (c *Client) ListAccounts(ctx context.Context, externalUserID string) ([]dom
 	}
 
 	var res = struct {
-		accounts []Account
+		Accounts []Account
 	}{}
 	props := Props{
 		ctx:         ctx,
@@ -34,5 +34,5 @@ func (c *Client) ListAccounts(ctx context.Context, externalUserID string) ([]dom
 		return []domain.Account{}, err
 	}
 
-	return ToDomainAccountList(res.accounts, externalUserID), nil
+	return ToDomainAccountList(res.Accounts, externalUserID), nil
 }

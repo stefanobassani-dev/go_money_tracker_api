@@ -106,6 +106,7 @@ type Account struct {
 	Dates                  Dates       `json:"dates"`
 	FinancialInstitutionID string      `json:"financialInstitutionId"`
 	CustomerSegment        string      `json:"customerSegment"`
+	CredentialID           string      `json:"credentialId"`
 }
 
 type Balances struct {
@@ -158,4 +159,81 @@ type ProviderConsent struct {
 	SessionExtendable bool     `json:"sessionExtendable"`
 	AccountIds        []string `json:"accountIds"`
 	StatusUpdated     int64    `json:"statusUpdated"`
+}
+
+type TransactionResponse struct {
+	NextPageToken string        `json:"nextPageToken"`
+	Transactions  []Transaction `json:"transactions"`
+}
+
+type Transaction struct {
+	ID                  string                 `json:"id"`
+	AccountID           string                 `json:"accountId"`
+	Amount              Amount                 `json:"amount"`
+	BookedDateTime      time.Time              `json:"bookedDateTime"`
+	TransactionDateTime time.Time              `json:"transactionDateTime"`
+	ValueDateTime       time.Time              `json:"valueDateTime"`
+	Dates               TransactionDates       `json:"dates"`
+	Descriptions        Descriptions           `json:"descriptions"`
+	Identifiers         TransactionIdentifiers `json:"identifiers"`
+	Status              string                 `json:"status"`
+	Reference           string                 `json:"reference"`
+	ProviderMutability  string                 `json:"providerMutability"`
+	Categories          Categories             `json:"categories"`
+	Counterparties      Counterparties         `json:"counterparties"`
+	MerchantInformation MerchantInformation    `json:"merchantInformation"`
+	Types               TransactionTypes       `json:"types"`
+}
+
+type TransactionDates struct {
+	Booked      string `json:"booked"`
+	Transaction string `json:"transaction"`
+	Value       string `json:"value"`
+}
+
+type Descriptions struct {
+	Display  string   `json:"display"`
+	Original string   `json:"original"`
+	Detailed Detailed `json:"detailed"`
+}
+
+type Detailed struct {
+	Unstructured string `json:"unstructured"`
+}
+
+type TransactionIdentifiers struct {
+	ProviderTransactionID string `json:"providerTransactionId"`
+}
+
+type Counterparties struct {
+	Payee Party `json:"payee"`
+	Payer Party `json:"payer"`
+}
+
+type Party struct {
+	Name        string           `json:"name"`
+	Identifiers PartyIdentifiers `json:"identifiers"`
+}
+
+type PartyIdentifiers struct {
+	FinancialInstitution FinancialInstitution `json:"financialInstitution"`
+}
+
+type MerchantInformation struct {
+	MerchantCategoryCode string `json:"merchantCategoryCode"`
+	MerchantName         string `json:"merchantName"`
+}
+
+type Categories struct {
+	Pfm PfmCategory `json:"pfm"`
+}
+
+type PfmCategory struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type TransactionTypes struct {
+	Type                         string `json:"type"`
+	FinancialInstitutionTypeCode string `json:"financialInstitutionTypeCode"`
 }

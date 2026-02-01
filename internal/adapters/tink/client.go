@@ -18,6 +18,7 @@ const (
 	PathGetCredential     APIPath = "/api/v1/credentials/"
 	PathListAccounts      APIPath = "/data/v2/accounts"
 	PathProviderConsent   APIPath = "/api/v1/provider-consents"
+	PathListTransactions  APIPath = "/data/v2/transactions"
 )
 
 type ContentType string
