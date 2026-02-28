@@ -13,7 +13,7 @@ type contextKey string
 
 const UserIDKey contextKey = "userID"
 
-func AuthMiddleware(tokenService domain.TokenService) func(http.Handler) http.Handler {
+func AuthMiddleware(jwtService domain.JWTService) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
@@ -30,7 +30,7 @@ func AuthMiddleware(tokenService domain.TokenService) func(http.Handler) http.Ha
 
 			tokenString := parts[1]
 
-			userID, err := tokenService.Validate(tokenString)
+			userID, err := jwtService.Validate(tokenString)
 			if err != nil {
 				json.Error(w, http.StatusUnauthorized, "Invalid or expired token")
 				return

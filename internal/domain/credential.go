@@ -2,7 +2,12 @@ package domain
 
 import (
 	"context"
+	"errors"
 	"time"
+)
+
+var (
+	ErrInvalidCredentials = errors.New("invalid credentials")
 )
 
 type Credential struct {

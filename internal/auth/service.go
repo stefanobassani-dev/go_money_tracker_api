@@ -9,26 +9,38 @@ import (
 )
 
 type Service struct {
-	provider     domain.AuthProvider
-	tokenService domain.TokenService
-	repo         domain.UserRepository
+	jwtService domain.JWTService
+	repo       domain.UserRepository
 }
 
-func NewAuthService(provider domain.AuthProvider, tokenService domain.TokenService, repo domain.UserRepository) *Service {
+func NewAuthService(jwtService domain.JWTService, repo domain.UserRepository) *Service {
 	return &Service{
-		provider:     provider,
-		tokenService: tokenService,
-		repo:         repo,
+		jwtService: jwtService,
+		repo:       repo,
 	}
 }
 
+func (s *Service) Authenticate(ctx context.Context, email string, password string) (*domain.User, error) {
+	user, err := s.repo.FindByEmail(ctx, email)
+	if err != nil {
+		slog.Error("database error", "err", err)
+		return nil, err
+	}
+
+	if !CheckPassword(password, user.Password) {
+		return nil, domain.ErrInvalidCredentials
+	}
+
+	return user, nil
+}
+
 func (s *Service) Login(ctx context.Context, email string, password string) (*domain.User, *string, error) {
-	user, err := s.provider.Authenticate(ctx, email, password)
+	user, err := s.Authenticate(ctx, email, password)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	token, err := s.tokenService.Generate(user.ID)
+	token, err := s.jwtService.Generate(user.ID)
 	if err != nil {
 		return nil, nil, err
 	}

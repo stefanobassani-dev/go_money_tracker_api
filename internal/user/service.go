@@ -22,6 +22,9 @@ func NewService(userRepo domain.UserRepository, tinkClient domain.TinkClient) *S
 	}
 }
 
+// GetOrCreateUser checks if a Tink user already exists for the given external ID.
+// It returns the existing user ID if found; otherwise, it creates a new user
+// and returns the newly generated ID.
 func (s *Service) GetOrCreateTinkUser(ctx context.Context, userID string) (string, error) {
 	localTinkID, err := s.userRepo.GetTinkIDByUserID(ctx, userID)
 	if err == nil && localTinkID != "" {

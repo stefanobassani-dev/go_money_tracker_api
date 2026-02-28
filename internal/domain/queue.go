@@ -2,7 +2,12 @@ package domain
 
 import (
 	"context"
+	"errors"
 	"time"
+)
+
+var (
+	ErrNoJob = errors.New("no jobs in queue")
 )
 
 type CredentialJobPayload struct {

@@ -35,7 +35,7 @@ type App struct {
 
 	//service
 	authService        domain.AuthService
-	tokenService       domain.TokenService
+	jwtService         domain.JWTService
 	credentialService  domain.CredentialService
 	userService        domain.UserService
 	accountService     domain.AccountService
@@ -78,7 +78,7 @@ func Bootstrap(ctx context.Context) *App {
 		os.Exit(1)
 	}
 
-	tokenService := auth.NewTokenService(cfg.JWT.Secret, cfg.JWT.Expiry)
+	jwtService := auth.NewJWTService(cfg.JWT.Secret, cfg.JWT.Expiry)
 	redisQueue := redis2.NewQueue(rdb)
 	credentialRepo := postgres.NewCredentialRepository(pool)
 	userRepo := postgres.NewUserRepository(pool)
@@ -90,13 +90,12 @@ func Bootstrap(ctx context.Context) *App {
 
 	userService := user.NewService(userRepo, tinkClient)
 
-	authMiddleware := customMiddleware.AuthMiddleware(tokenService)
+	authMiddleware := customMiddleware.AuthMiddleware(jwtService)
 
 	credentialService := credential.NewService(credentialRepo, tinkClient, redisQueue)
 	credentialHandler := credential.NewHandler(credentialService, userService, authMiddleware)
 
-	provider := auth.NewEmailPasswordAuth(userRepo)
-	authService := auth.NewAuthService(provider, tokenService, userRepo)
+	authService := auth.NewAuthService(jwtService, userRepo)
 	authHandler := auth.NewAuthHandler(authService)
 
 	accountRepository := postgres.NewAccountRepository(pool)
@@ -116,7 +115,7 @@ func Bootstrap(ctx context.Context) *App {
 		authHandler:       authHandler,
 		credentialHandler: credentialHandler,
 
-		tokenService:       tokenService,
+		jwtService:         jwtService,
 		authService:        authService,
 		credentialService:  credentialService,
 		userService:        userService,

@@ -2,7 +2,13 @@ package domain
 
 import (
 	"context"
+	"errors"
 	"time"
+)
+
+var (
+	ErrUserNotFound      = errors.New("user not found")
+	ErrUserAlreadyExists = errors.New("user already exists")
 )
 
 type UserRepository interface {
@@ -17,10 +23,10 @@ type UserService interface {
 }
 
 type User struct {
-	ID         string    `json:"id"`
-	Email      string    `json:"email"`
-	Password   string    `json:"-"`
-	TinkUserId *string   `json:"-"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	ID         string
+	Email      string
+	Password   string
+	TinkUserId *string
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 }

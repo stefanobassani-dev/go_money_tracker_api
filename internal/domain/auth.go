@@ -1,12 +1,11 @@
 package domain
 
-import "context"
-
-type AuthProvider interface {
-	Authenticate(ctx context.Context, email string, password string) (*User, error)
-}
+import (
+	"context"
+)
 
 type AuthService interface {
-	Login(ctx context.Context, email string, password string) (*User, *string, error)
-	Register(ctx context.Context, email string, password string) error
+	Login(ctx context.Context, email, password string) (*User, *string, error)
+	Register(ctx context.Context, email, password string) error
+	Authenticate(ctx context.Context, email, password string) (*User, error)
 }
