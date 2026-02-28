@@ -8,7 +8,7 @@ import (
 	"github.com/stefanobassani-dev/money-tracker/internal/domain"
 )
 
-func ToDomainCredential(dto *Credential, externalUserID string) domain.Credential {
+func ToDomainCredential(dto *credential, externalUserID string) domain.Credential {
 	return domain.Credential{
 		CredentialID: dto.ID,
 		TinkUserID:   dto.UserID,
@@ -21,7 +21,7 @@ func ToDomainCredential(dto *Credential, externalUserID string) domain.Credentia
 	}
 }
 
-func ToDomainAccountList(dtos []Account, userID string) []domain.Account {
+func ToDomainAccountList(dtos []account, userID string) []domain.Account {
 	result := make([]domain.Account, len(dtos))
 	for i, dto := range dtos {
 		result[i] = ToDomainAccount(dto, userID)
@@ -29,7 +29,7 @@ func ToDomainAccountList(dtos []Account, userID string) []domain.Account {
 	return result
 }
 
-func ToDomainAccount(dto Account, userID string) domain.Account {
+func ToDomainAccount(dto account, userID string) domain.Account {
 	balance := parseBalance(dto.Balances.Booked.Amount.Value)
 
 	return domain.Account{
@@ -47,7 +47,7 @@ func ToDomainAccount(dto Account, userID string) domain.Account {
 	}
 }
 
-func parseBalance(val Value) float64 {
+func parseBalance(val value) float64 {
 	unscaled, err := strconv.ParseInt(val.UnscaledValue, 10, 64)
 	if err != nil {
 		return 0
@@ -61,7 +61,7 @@ func parseBalance(val Value) float64 {
 	return float64(unscaled) * math.Pow(10, -float64(scale))
 }
 
-func ToDomainProviderConsentList(dtos []ProviderConsent) []domain.ProviderConsent {
+func ToDomainProviderConsentList(dtos []providerConsent) []domain.ProviderConsent {
 	result := make([]domain.ProviderConsent, len(dtos))
 	for i, dto := range dtos {
 		result[i] = ToDomainProviderConsent(dto)
@@ -69,7 +69,7 @@ func ToDomainProviderConsentList(dtos []ProviderConsent) []domain.ProviderConsen
 	return result
 }
 
-func ToDomainProviderConsent(dto ProviderConsent) domain.ProviderConsent {
+func ToDomainProviderConsent(dto providerConsent) domain.ProviderConsent {
 	return domain.ProviderConsent{
 		CredentialsID:     dto.CredentialsId,
 		ProviderName:      dto.ProviderName,
@@ -81,7 +81,7 @@ func ToDomainProviderConsent(dto ProviderConsent) domain.ProviderConsent {
 	}
 }
 
-func ToDomainTransactionList(dtos []Transaction) []domain.Transaction {
+func ToDomainTransactionList(dtos []transaction) []domain.Transaction {
 	result := make([]domain.Transaction, len(dtos))
 	for i, dto := range dtos {
 		result[i] = ToDomainTransaction(dto)
@@ -89,7 +89,7 @@ func ToDomainTransactionList(dtos []Transaction) []domain.Transaction {
 	return result
 }
 
-func ToDomainTransaction(dto Transaction) domain.Transaction {
+func ToDomainTransaction(dto transaction) domain.Transaction {
 	amount := parseBalance(dto.Amount.Value)
 
 	return domain.Transaction{

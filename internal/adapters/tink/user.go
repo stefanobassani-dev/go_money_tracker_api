@@ -8,13 +8,25 @@ import (
 	"github.com/stefanobassani-dev/money-tracker/internal/domain"
 )
 
+type createUserRequest struct {
+	ExternalUserID string `json:"external_user_id,omitempty"`
+	Market         string `json:"market"`
+	Locale         string `json:"locale,omitempty"`
+	RetentionClass string `json:"retention_class,omitempty"`
+}
+
+type createUserResponse struct {
+	UserID         string `json:"user_id"`
+	ExternalUserID string `json:"external_user_id"`
+}
+
 func (c *Client) CreateUser(ctx context.Context, externalID string) (string, error) {
 	clientToken, err := c.TokenManager.GetToken(ctx)
 	if err != nil {
 		return "", err
 	}
 
-	req := &CreateUserRequest{
+	req := &createUserRequest{
 		ExternalUserID: externalID,
 		Market:         c.Cfg.Market,
 		Locale:         c.Cfg.Locale,
@@ -26,7 +38,7 @@ func (c *Client) CreateUser(ctx context.Context, externalID string) (string, err
 		return "", err
 	}
 
-	var res CreateUserResponse
+	var res createUserResponse
 
 	props := Props{
 		ctx:         ctx,
@@ -51,6 +63,44 @@ func (c *Client) CreateUser(ctx context.Context, externalID string) (string, err
 	return res.UserID, nil
 }
 
+type user struct {
+	AppID          string   `json:"appId"`
+	Created        string   `json:"created"`
+	ExternalUserID string   `json:"externalUserId"`
+	Flags          []string `json:"flags"`
+	ID             string   `json:"id"`
+	NationalID     string   `json:"nationalId"`
+	Profile        profile  `json:"profile"`
+	Username       string   `json:"username"`
+}
+
+type profile struct {
+	Currency             string               `json:"currency"`
+	Locale               string               `json:"locale"`
+	Market               string               `json:"market"`
+	NotificationSettings notificationSettings `json:"notificationSettings"`
+	PeriodAdjustedDay    int                  `json:"periodAdjustedDay"`
+	PeriodMode           string               `json:"periodMode"`
+	TimeZone             string               `json:"timeZone"`
+}
+
+type notificationSettings struct {
+	Balance         bool `json:"balance"`
+	Budget          bool `json:"budget"`
+	DoubleCharge    bool `json:"doubleCharge"`
+	EInvoices       bool `json:"einvoices"`
+	Fraud           bool `json:"fraud"`
+	Income          bool `json:"income"`
+	LargeExpense    bool `json:"largeExpense"`
+	LeftToSpend     bool `json:"leftToSpend"`
+	LoanUpdate      bool `json:"loanUpdate"`
+	SummaryMonthly  bool `json:"summaryMonthly"`
+	SummaryWeekly   bool `json:"summaryWeekly"`
+	Transaction     bool `json:"transaction"`
+	UnusualAccount  bool `json:"unusualAccount"`
+	UnusualCategory bool `json:"unusualCategory"`
+}
+
 func (c *Client) GetUserByExternalID(ctx context.Context, externalID string) (string, error) {
 	scopes := []string{"accounts:read"}
 	accessToken, err := c.ExchangeUserToken(ctx, externalID, scopes)
@@ -58,7 +108,7 @@ func (c *Client) GetUserByExternalID(ctx context.Context, externalID string) (st
 		return "", err
 	}
 
-	var res User
+	var res user
 	props := Props{
 		ctx:         ctx,
 		httpClient:  c.httpClient,

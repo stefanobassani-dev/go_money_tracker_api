@@ -39,7 +39,7 @@ func (s *Service) GetConnectURL(ctx context.Context, externalUserID string) (str
 		return "", err
 	}
 
-	return s.tinkClient.BuildUrl(code, externalUserID), nil
+	return s.tinkClient.BuildAuthURL(code, externalUserID), nil
 }
 
 func (s *Service) SaveCredential(ctx context.Context, credentialID string, externalUserID string) error {

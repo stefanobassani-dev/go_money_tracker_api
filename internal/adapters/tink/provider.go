@@ -17,7 +17,7 @@ func (c *Client) ProviderConsent(ctx context.Context, externalUserID string) ([]
 	}
 
 	var res = struct {
-		ProviderConsents []ProviderConsent
+		ProviderConsents []providerConsent
 	}{}
 	props := Props{
 		ctx:         ctx,
