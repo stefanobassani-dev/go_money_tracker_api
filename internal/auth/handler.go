@@ -43,16 +43,11 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	user, token, err := h.service.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
-		if errors.Is(err, domain.ErrInvalidCredentials) {
+		if errors.Is(err, domain.ErrInvalidAuth) {
 			json.Error(w, http.StatusUnauthorized, "Incorrect email or password")
-			return
+		} else {
+			json.Error(w, http.StatusInternalServerError, "Internal server error")
 		}
-		if errors.Is(err, domain.ErrUserNotFound) {
-			json.Error(w, http.StatusUnauthorized, "User not found")
-			return
-		}
-
-		json.Error(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}
 

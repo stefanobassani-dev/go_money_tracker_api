@@ -3,7 +3,9 @@ package domain
 import "errors"
 
 var (
-	ErrTokenInvalid = errors.New("invalid token")
+	ErrTokenInvalid          = errors.New("invalid token")
+	ErrTokenInvalidSignature = errors.New("invalid token signature")
+	ErrTokenExpired          = errors.New("token expired")
 )
 
 type JWTService interface {

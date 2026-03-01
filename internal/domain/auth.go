@@ -2,6 +2,11 @@ package domain
 
 import (
 	"context"
+	"errors"
+)
+
+var (
+	ErrInvalidAuth = errors.New("invalid auth credentials")
 )
 
 type AuthService interface {

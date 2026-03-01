@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -32,7 +33,11 @@ func AuthMiddleware(jwtService domain.JWTService) func(http.Handler) http.Handle
 
 			userID, err := jwtService.Validate(tokenString)
 			if err != nil {
-				json.Error(w, http.StatusUnauthorized, "Invalid or expired token")
+				if errors.Is(err, domain.ErrTokenExpired) {
+					json.Error(w, http.StatusUnauthorized, "Expired token")
+				} else {
+					json.Error(w, http.StatusUnauthorized, "Invalid token")
+				}
 				return
 			}
 

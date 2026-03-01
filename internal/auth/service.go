@@ -23,29 +23,32 @@ func NewAuthService(jwtService domain.JWTService, repo domain.UserRepository) *S
 func (s *Service) Authenticate(ctx context.Context, email string, password string) (*domain.User, error) {
 	user, err := s.repo.FindByEmail(ctx, email)
 	if err != nil {
-		slog.Error("database error", "err", err)
-		return nil, err
+		if errors.Is(err, domain.ErrInternal) {
+			slog.Error("database error", "err", err)
+			return nil, err
+		}
+		return nil, domain.ErrInvalidAuth
 	}
 
 	if !CheckPassword(password, user.Password) {
-		return nil, domain.ErrInvalidCredentials
+		return nil, domain.ErrInvalidAuth
 	}
 
 	return user, nil
 }
 
-func (s *Service) Login(ctx context.Context, email string, password string) (*domain.User, *string, error) {
+func (s *Service) Login(ctx context.Context, email string, password string) (*domain.User, string, error) {
 	user, err := s.Authenticate(ctx, email, password)
 	if err != nil {
-		return nil, nil, err
+		return nil, "", err
 	}
 
 	token, err := s.jwtService.Generate(user.ID)
 	if err != nil {
-		return nil, nil, err
+		return nil, "", err
 	}
 
-	return user, &token, nil
+	return user, token, nil
 }
 
 func (s *Service) Register(ctx context.Context, email string, password string) error {

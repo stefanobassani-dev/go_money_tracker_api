@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -38,7 +37,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*domain
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, domain.ErrUserNotFound
 		}
-		return nil, fmt.Errorf("database error: %w", err)
+		return nil, domain.ErrInternal
 	}
 	return &user, nil
 }
