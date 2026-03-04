@@ -93,8 +93,8 @@ func Bootstrap(ctx context.Context) *App {
 	httpClient := &http.Client{
 		Timeout: time.Second * 5,
 	}
-	tokenManager := tink2.NewTokenManager(httpClient, &cfg.Tink)
-	tinkClient := tink2.NewTinkClient(&cfg.Tink, tokenManager, httpClient)
+	simpleTokenManager := tink2.NewSimpleTokenManager(httpClient, &cfg.Tink)
+	tinkClient := tink2.NewTinkClient(&cfg.Tink, simpleTokenManager, httpClient)
 
 	userService := user.NewService(userRepo, tinkClient)
 

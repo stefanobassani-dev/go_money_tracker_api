@@ -11,7 +11,12 @@ import (
 	"github.com/stefanobassani-dev/money-tracker/internal/config"
 )
 
-type TokenManager struct {
+type ClientTokenManager interface {
+	GetToken(ctx context.Context) (string, error)
+}
+
+// simple client token manager with one token with all scopes (highly insecure)
+type SimpleTokenManager struct {
 	clientAccessToken string
 	expiry            time.Time
 
@@ -20,26 +25,26 @@ type TokenManager struct {
 	mu         sync.RWMutex
 }
 
-func NewTokenManager(httpClient *http.Client, cfg *config.TinkConfig) *TokenManager {
-	return &TokenManager{
+func NewSimpleTokenManager(httpClient *http.Client, cfg *config.TinkConfig) *SimpleTokenManager {
+	return &SimpleTokenManager{
 		httpClient: httpClient,
 		cfg:        cfg,
 	}
 }
 
-func (m *TokenManager) GetToken(ctx context.Context) (string, error) {
-	m.mu.RLock()
-	if m.clientAccessToken != "" && time.Now().Before(m.expiry.Add(-1*time.Minute)) {
-		m.mu.RUnlock()
-		return m.clientAccessToken, nil
+func (sm *SimpleTokenManager) GetToken(ctx context.Context) (string, error) {
+	sm.mu.RLock()
+	if sm.clientAccessToken != "" && time.Now().Before(sm.expiry.Add(-1*time.Minute)) {
+		sm.mu.RUnlock()
+		return sm.clientAccessToken, nil
 	}
-	m.mu.RUnlock()
+	sm.mu.RUnlock()
 
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
 
-	if m.clientAccessToken != "" && time.Now().Before(m.expiry.Add(-1*time.Minute)) {
-		return m.clientAccessToken, nil
+	if sm.clientAccessToken != "" && time.Now().Before(sm.expiry.Add(-1*time.Minute)) {
+		return sm.clientAccessToken, nil
 	}
 
 	scopes := []string{
@@ -54,23 +59,23 @@ func (m *TokenManager) GetToken(ctx context.Context) (string, error) {
 		"accounts:read",
 		"transactions:read"}
 
-	newToken, expiresIn, err := m.RefreshClientToken(ctx, scopes)
+	newToken, expiresIn, err := sm.RefreshClientToken(ctx, scopes)
 	if err != nil {
 		return "", err
 	}
 
-	m.clientAccessToken = newToken
-	m.expiry = time.Now().Add(time.Duration(expiresIn) * time.Second)
+	sm.clientAccessToken = newToken
+	sm.expiry = time.Now().Add(time.Duration(expiresIn) * time.Second)
 
-	return m.clientAccessToken, nil
+	return sm.clientAccessToken, nil
 }
 
-func (m *TokenManager) RefreshClientToken(ctx context.Context, scopes []string) (string, int, error) {
+func (sm *SimpleTokenManager) RefreshClientToken(ctx context.Context, scopes []string) (string, int, error) {
 	data := url.Values{}
 	data.Set("grant_type", "client_credentials")
 	data.Set("scope", strings.Join(scopes, ","))
-	data.Set("client_id", m.cfg.ClientId)
-	data.Set("client_secret", m.cfg.ClientSecret)
+	data.Set("client_id", sm.cfg.ClientId)
+	data.Set("client_secret", sm.cfg.ClientSecret)
 	body := strings.NewReader(data.Encode())
 
 	var res struct {
@@ -80,8 +85,8 @@ func (m *TokenManager) RefreshClientToken(ctx context.Context, scopes []string) 
 
 	props := Props{
 		ctx:         ctx,
-		httpClient:  m.httpClient,
-		baseUrl:     m.cfg.BaseUrl,
+		httpClient:  sm.httpClient,
+		baseUrl:     sm.cfg.BaseUrl,
 		path:        string(PathTokenExchange),
 		method:      http.MethodPost,
 		body:        body,

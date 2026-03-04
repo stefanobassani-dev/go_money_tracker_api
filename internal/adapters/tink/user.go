@@ -3,6 +3,7 @@ package tink
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/stefanobassani-dev/money-tracker/internal/domain"
@@ -57,7 +58,8 @@ func (c *Client) CreateUser(ctx context.Context, externalID string) (string, err
 		if errors.As(err, &tErr) && tErr.StatusCode == http.StatusConflict {
 			return "", domain.ErrUserAlreadyExists
 		}
-		return "", err
+		slog.Error("tink error while creating a new tink user", "userID", externalID)
+		return "", domain.ErrInternal
 	}
 
 	return res.UserID, nil
@@ -122,7 +124,12 @@ func (c *Client) GetUserByExternalID(ctx context.Context, externalID string) (st
 	}
 	err = call(props)
 	if err != nil {
-		return "", err
+		var tErr *TinkError
+		if errors.As(err, &tErr) && tErr.StatusCode == http.StatusNotFound {
+			return "", domain.ErrUserNotFound
+		}
+		slog.Error("tink error while retrieving tink user", "userID", externalID)
+		return "", domain.ErrInternal
 	}
 
 	return res.ID, nil

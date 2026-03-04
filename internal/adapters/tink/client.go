@@ -33,11 +33,11 @@ const ApiConnectURL = "https://link.tink.com/1.0/transactions/connect-accounts"
 
 type Client struct {
 	Cfg          *config.TinkConfig
-	TokenManager *TokenManager
+	TokenManager TokenManager
 	httpClient   *http.Client
 }
 
-func NewTinkClient(cfg *config.TinkConfig, tokenManager *TokenManager, http *http.Client) *Client {
+func NewTinkClient(cfg *config.TinkConfig, tokenManager TokenManager, http *http.Client) *Client {
 	return &Client{
 		Cfg:          cfg,
 		TokenManager: tokenManager,

@@ -41,6 +41,7 @@ func (h *Handler) GetConnectURL(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(middleware.UserIDKey).(string)
 	if !ok {
 		json.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
 	}
 	ctx := r.Context()
 

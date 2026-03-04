@@ -3,10 +3,8 @@ package user
 import (
 	"context"
 	"errors"
-	"fmt"
-	"log"
+	"log/slog"
 
-	"github.com/jackc/pgx/v5"
 	"github.com/stefanobassani-dev/money-tracker/internal/domain"
 )
 
@@ -31,8 +29,9 @@ func (s *Service) GetOrCreateTinkUser(ctx context.Context, userID string) (strin
 		return localTinkID, nil
 	}
 
-	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-		return "", fmt.Errorf("database error during lookup: %w", err)
+	if err != nil && !errors.Is(err, domain.ErrUserNotFound) {
+		slog.Error("database error during user tink id retrieval", "userID", userID)
+		return "", domain.ErrInternal
 	}
 
 	tinkID, err := s.tinkClient.CreateUser(ctx, userID)
@@ -40,15 +39,22 @@ func (s *Service) GetOrCreateTinkUser(ctx context.Context, userID string) (strin
 		if errors.Is(err, domain.ErrUserAlreadyExists) {
 			tinkID, err = s.tinkClient.GetUserByExternalID(ctx, userID)
 			if err != nil {
-				return "", fmt.Errorf("failed to recover existing user from tink: %w", err)
+				if errors.Is(err, domain.ErrUserNotFound) {
+					slog.Error("critical tink inconsistency", "userID", userID)
+				}
+				return "", domain.ErrInternal
 			}
 		} else {
-			return "", fmt.Errorf("failed to create user on tink: %w", err)
+			return "", err
 		}
 	}
 
 	if err := s.userRepo.UpdateTinkID(ctx, userID, tinkID); err != nil {
-		log.Printf("warning: could not save tink id %s for user %s: %v", tinkID, userID, err)
+		slog.Warn("asynchronous data inconsistency: tink id created but not saved locally",
+			"userID", userID,
+			"tinkID", tinkID,
+			"error", err,
+		)
 	}
 
 	return tinkID, nil
