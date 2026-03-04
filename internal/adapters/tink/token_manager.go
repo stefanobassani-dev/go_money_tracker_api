@@ -15,7 +15,7 @@ type ClientTokenManager interface {
 	GetToken(ctx context.Context) (string, error)
 }
 
-// simple client token manager with one token with all scopes (highly insecure)
+// simple client token manager with one token with all scopes (highly insecuret)
 type SimpleTokenManager struct {
 	clientAccessToken string
 	expiry            time.Time
