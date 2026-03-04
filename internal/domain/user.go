@@ -3,7 +3,6 @@ package domain
 import (
 	"context"
 	"errors"
-	"time"
 )
 
 var (
@@ -12,8 +11,8 @@ var (
 )
 
 type UserRepository interface {
-	FindByEmail(ctx context.Context, email string) (*User, error)
-	CreateUser(ctx context.Context, user *User) error
+	FindByEmail(ctx context.Context, email string) (*User, string, error)
+	CreateUser(ctx context.Context, email, password string) error
 	GetTinkIDByUserID(ctx context.Context, userID string) (string, error)
 	UpdateTinkID(ctx context.Context, userID string, newTinkID string) error
 }
@@ -23,10 +22,7 @@ type UserService interface {
 }
 
 type User struct {
-	ID         string
-	Email      string
-	Password   string
-	TinkUserId *string
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	ID             string
+	Email          string
+	ProviderUserID string
 }

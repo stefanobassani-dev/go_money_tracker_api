@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jmoiron/sqlx"
 	"github.com/lmittmann/tint"
 	"github.com/redis/go-redis/v9"
 	"github.com/stefanobassani-dev/money-tracker/internal/account"
@@ -68,7 +70,13 @@ func Bootstrap(ctx context.Context) *App {
 
 	pool, err := pgxpool.New(ctx, cfg.DB.ConnectionString())
 	if err != nil {
-		slog.Error("failed to connect to database", "error", err)
+		slog.Error("failed to connect database with pgx", "error", err)
+		os.Exit(1)
+	}
+
+	db, err := sqlx.Connect("pgx", cfg.DB.ConnectionString())
+	if err != nil {
+		slog.Error("failed to connect to database with sqlx", "error", err)
 		os.Exit(1)
 	}
 
@@ -81,7 +89,7 @@ func Bootstrap(ctx context.Context) *App {
 	jwtService := auth.NewJWTService(cfg.JWT.Secret, cfg.JWT.Expiry)
 	redisQueue := redis2.NewQueue(rdb)
 	credentialRepo := postgres.NewCredentialRepository(pool)
-	userRepo := postgres.NewUserRepository(pool)
+	userRepo := postgres.NewUserRepository(db)
 	httpClient := &http.Client{
 		Timeout: time.Second * 5,
 	}

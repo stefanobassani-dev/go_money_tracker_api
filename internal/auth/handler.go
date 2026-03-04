@@ -29,7 +29,7 @@ func (h *Handler) Routes() chi.Router {
 }
 
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
-	var req LoginRequest
+	var req AuthRequest
 	err := json.Decode(r, &req)
 	if err != nil {
 		json.Error(w, http.StatusInternalServerError, "Internal server error")
@@ -55,7 +55,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
-	var req LoginRequest
+	var req AuthRequest
 	err := json.Decode(r, &req)
 	if err != nil {
 		json.Error(w, http.StatusInternalServerError, "Internal server error")

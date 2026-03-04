@@ -6,12 +6,12 @@ import (
 	"strings"
 )
 
-type LoginRequest struct {
+type AuthRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-func (r *LoginRequest) Validate() error {
+func (r *AuthRequest) Validate() error {
 	r.Email = strings.TrimSpace(r.Email)
 
 	if r.Email == "" {

@@ -21,7 +21,7 @@ func NewAuthService(jwtService domain.JWTService, repo domain.UserRepository) *S
 }
 
 func (s *Service) Authenticate(ctx context.Context, email string, password string) (*domain.User, error) {
-	user, err := s.repo.FindByEmail(ctx, email)
+	user, hash, err := s.repo.FindByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, domain.ErrInternal) {
 			slog.Error("database error", "err", err)
@@ -30,7 +30,7 @@ func (s *Service) Authenticate(ctx context.Context, email string, password strin
 		return nil, domain.ErrInvalidAuth
 	}
 
-	if !CheckPassword(password, user.Password) {
+	if !CheckPassword(password, hash) {
 		return nil, domain.ErrInvalidAuth
 	}
 
@@ -52,26 +52,21 @@ func (s *Service) Login(ctx context.Context, email string, password string) (*do
 }
 
 func (s *Service) Register(ctx context.Context, email string, password string) error {
-	_, err := s.repo.FindByEmail(ctx, email)
+	_, _, err := s.repo.FindByEmail(ctx, email)
 
 	if err == nil {
-		slog.Error("user already exists", "email", email)
 		return domain.ErrUserAlreadyExists
 	}
 
 	if !errors.Is(err, domain.ErrUserNotFound) {
 		slog.Error("database error", "err", err)
-		return err
+		return domain.ErrInternal
 	}
 
 	hashedPassword, err := HashPassword(password)
 	if err != nil {
-		return err
+		return domain.ErrInternal
 	}
 
-	user := &domain.User{
-		Email:    email,
-		Password: hashedPassword,
-	}
-	return s.repo.CreateUser(ctx, user)
+	return s.repo.CreateUser(ctx, email, hashedPassword)
 }
